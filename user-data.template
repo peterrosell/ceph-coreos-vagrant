@@ -7,8 +7,59 @@ coreos:
       addr: $public_ipv4:4001
       peer-addr: $public_ipv4:7001
   units:
+    - name: format-ephemeral.1.service
+      command: start
+      content: |
+        [Unit]
+        Description=Formats the ephemeral drive
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/sbin/wipefs -f /dev/sda
+        ExecStart=/usr/sbin/mkfs.btrfs -f /dev/sda
+        ExecPost=mkdir -p /usr/local/disk_a
+
+    - name: usr-local-disk_a.mount
+      command: start
+      content: |
+        [Unit]
+        Description=Mount ephemeral.1 to /usr/local/disk_a
+        Requires=format-ephemeral.1.service
+        After=format-ephemeral.1.service
+        Before=docker.service
+        [Mount]
+        What=/dev/sda
+        Where=/usr/local/disk_a
+        Type=btrfs
+
+    - name: format-ephemeral.2.service
+      command: start
+      content: |
+        [Unit]
+        Description=Formats the ephemeral drive
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/sbin/wipefs -f /dev/sdb
+        ExecStart=/usr/sbin/mkfs.btrfs -f /dev/sdb
+        ExecPost=mkdir -p /usr/local/disk_b
+
+    - name: usr-local-disk_b.mount
+      command: start
+      content: |
+        [Unit]
+        Description=Mount ephemeral.2 to /usr/local/disk_b
+        Requires=format-ephemeral.2.service
+        After=format-ephemeral.2.service
+        Before=docker.service
+        [Mount]
+        What=/dev/sdb
+        Where=/usr/local/disk_b
+        Type=btrfs
+
     - name: etcd.service
       command: start
+
     - name: fleet.service
       command: start
       runtime: no
@@ -19,6 +70,7 @@ coreos:
         [Service]
         Environment=FLEET_PUBLIC_IP=$public_ipv4
         ExecStart=/usr/bin/fleet
+
     - name: docker-tcp.socket
       command: start
       enable: true
