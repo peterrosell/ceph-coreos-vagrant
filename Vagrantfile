@@ -101,7 +101,7 @@ Vagrant.configure("2") do |config|
         vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, '--type', 'hdd', '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi"]
       end
 
-      ip = "172.17.8.#{i+100}"
+      ip = "#{NETWORK_BASE}.#{i+100}"
       config.vm.network :private_network, ip: ip
 
       # Uncomment below to enable NFS for sharing the host machine into the coreos-vagrant VM.
@@ -111,8 +111,6 @@ Vagrant.configure("2") do |config|
         config.vm.provision :file, :source => "#{CLOUD_CONFIG_PATH}", :destination => "/tmp/vagrantfile-user-data"
         config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
       end
-
-
     end
   end
 end
