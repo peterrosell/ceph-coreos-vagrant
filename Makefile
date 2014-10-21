@@ -18,6 +18,10 @@ discovery-url:
 	sed -e "s,discovery: https://discovery.etcd.io/.*,discovery: $$(curl -s -w '\n' https://discovery.etcd.io/new)," > \
 	user-data
 
+vagrant: discovery-url
+	vagrant up
+	rm user-data
+
 build: check-docker
 	@# Build base first due to dependencies
 	docker build -t $(IMAGE_PREFIX)ceph-base:$(BUILD_TAG) base/
