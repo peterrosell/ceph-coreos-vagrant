@@ -89,16 +89,20 @@ Vagrant.configure("2") do |config|
         vb.memory = $vb_memory
         vb.cpus = $vb_cpus
 
-        vb.customize ["storagectl", :id, "--add", "sata", "--name", "SATA Controller" , "--portcount", 2, "--hostiocache", "on"]
-
         unless File.exist?("#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi")
+          vb.customize ["storagectl", :id, "--add", "sata", "--name", "SATA Controller" , "--portcount", 2, "--hostiocache", "on"]
+
           vb.customize ['createhd', '--filename', "#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi", '--size', $size_of_extra_disk]
+          vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, 
+          '--type', 'hdd', '--setuuid', 'aaae7f5a-b8cf-457e-9df4-e3f3f26d1e11',
+          '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi"]
         end
-        vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, '--type', 'hdd', '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi"]
         unless File.exist?("#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi")
           vb.customize ['createhd', '--filename', "#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi", '--size', $size_of_extra_disk]
+          vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, 
+          '--type', 'hdd', '--setuuid', 'bbbe7f5a-b8cf-457e-9df4-e3f3f26d1e11',
+          '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi"]
         end
-        vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, '--type', 'hdd', '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi"]
       end
 
       ip = "#{NETWORK_BASE}.#{i+100}"
@@ -108,6 +112,9 @@ Vagrant.configure("2") do |config|
       #config.vm.synced_folder ".", "/home/core/share", id: "core", :nfs => true, :mount_options => ['nolock,vers=3,udp']
 
       if File.exist?(CLOUD_CONFIG_PATH)
+        config.vm.provision :file, :source => "ln_disk.sh", :destination => "/tmp/ln_disk.sh"
+        config.vm.provision :shell, :inline => "chmod +x /tmp/ln_disk.sh", :privileged => true
+
         config.vm.provision :file, :source => "#{CLOUD_CONFIG_PATH}", :destination => "/tmp/vagrantfile-user-data"
         config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
       end

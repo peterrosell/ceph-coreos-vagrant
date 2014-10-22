@@ -7,7 +7,7 @@ coreos:
       addr: $public_ipv4:4001
       peer-addr: $public_ipv4:7001
   units:
-    - name: format-ephemeral.1.service
+    - name: prepare-ephemeral.1.service
       command: start
       content: |
         [Unit]
@@ -15,46 +15,76 @@ coreos:
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/sbin/wipefs -f /dev/sda
-        ExecStart=/usr/sbin/mkfs.btrfs -f /dev/sda
-        ExecPost=mkdir -p /usr/local/disk_a
+        ExecStartPre=/usr/bin/mkdir -p /disks/physical
+        ExecStart=/tmp/ln_disk.sh aaae7f5a /disks/physical/disk_a
+        SuccessExitStatus=0 203
 
-    - name: usr-local-disk_a.mount
+    - name: format-ephemeral.1.service
       command: start
       content: |
         [Unit]
-        Description=Mount ephemeral.1 to /usr/local/disk_a
+        Description=Formats the ephemeral drive
+        Requires=prepare-ephemeral.1.service
+        After=prepare-ephemeral.1.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/sbin/mkfs.btrfs --label disk_a /disks/physical/disk_a
+        ExecStartPost=/usr/bin/mkdir -p /disks/logical/disk_a
+        SuccessExitStatus=0 1
+
+    - name: disks-logical-disk_a.mount
+      command: start
+      content: |
+        [Unit]
+        Description=Mount ephemeral.1 to /disks/logical/disk_a
         Requires=format-ephemeral.1.service
         After=format-ephemeral.1.service
         Before=docker.service
+        ConditionPathIsDirectory=/disks/logical/disk_a
         [Mount]
-        What=/dev/sda
-        Where=/usr/local/disk_a
+        What=/disks/physical/disk_a
+        Where=/disks/logical/disk_a
         Type=btrfs
+
+    - name: prepare-ephemeral.2.service
+      command: start
+      content: |
+        [Unit]
+        Description=Formats the ephemeral drive
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStartPre=/usr/bin/mkdir -p /disks/physical
+        ExecStart=/tmp/ln_disk.sh bbbe7f5a /disks/physical/disk_b
+        SuccessExitStatus=0 203
 
     - name: format-ephemeral.2.service
       command: start
       content: |
         [Unit]
         Description=Formats the ephemeral drive
+        Requires=prepare-ephemeral.2.service
+        After=prepare-ephemeral.2.service
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/sbin/wipefs -f /dev/sdb
-        ExecStart=/usr/sbin/mkfs.btrfs -f /dev/sdb
-        ExecPost=mkdir -p /usr/local/disk_b
+        ExecStart=/usr/sbin/mkfs.btrfs --label disk_b /disks/physical/disk_b
+        ExecStartPost=/usr/bin/mkdir -p /disks/logical/disk_b
+        SuccessExitStatus=0 1
 
-    - name: usr-local-disk_b.mount
+    - name: disks-logical-disk_b.mount
       command: start
       content: |
         [Unit]
-        Description=Mount ephemeral.2 to /usr/local/disk_b
+        Description=Mount ephemeral.2 to /disks/logical/disk_b
         Requires=format-ephemeral.2.service
         After=format-ephemeral.2.service
         Before=docker.service
+        ConditionPathIsDirectory=/disks/logical/disk_b
         [Mount]
-        What=/dev/sdb
-        Where=/usr/local/disk_b
+        What=/disks/physical/disk_b
+        Where=/disks/logical/disk_b
         Type=btrfs
 
     - name: etcd.service

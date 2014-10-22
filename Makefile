@@ -20,7 +20,7 @@ discovery-url:
 
 vagrant: discovery-url
 	vagrant up
-	rm user-data
+#	rm user-data
 
 build: check-docker
 	@# Build base first due to dependencies
