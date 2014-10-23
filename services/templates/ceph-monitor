@@ -1,0 +1,16 @@
+[Unit]
+Description=Ceph Monitor
+#After=ceph-monitor.service
+
+[Service]
+Restart=always
+RestartSec=10s
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
+ExecStartPre=-/usr/bin/docker kill ceph-monitor
+ExecStartPre=-/usr/bin/docker rm ceph-monitor
+ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-monitor:latest
+ExecStart=/usr/bin/docker run --rm --name ceph-monitor ${DOCKER_REGISTRY}ceph-monitor
+ExecStop=/usr/bin/docker stop ceph-monitor
+X-Conflicts=ceph-monitor.service

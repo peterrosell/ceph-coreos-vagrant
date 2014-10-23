@@ -10,7 +10,11 @@ define echo_yellow
   @echo "\033[0;33m$(subst ",,$(1))\033[0m"
 endef
 
-REPOSITORY = peterrosell
+ifdef DOCKER_REGISTRY
+  REPOSITORY = $(DOCKER_REGISTRY)
+else
+  REPOSITORY = peterrosell/
+endif
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)
 REGISTRY = $(shell echo $$DEV_REGISTRY)
@@ -19,11 +23,7 @@ ifndef BUILD_TAG
   BUILD_TAG = git-$(GIT_SHA)
 endif
 
-ifndef S3_BUCKET
-  S3_BUCKET = deis-updates
-endif
-
-IMAGE_PREFIX := $(REPOSITORY)/
+IMAGE_PREFIX := $(REPOSITORY)
 
 check-docker:
 	@if [ -z $$(which docker) ]; then \
@@ -32,12 +32,13 @@ check-docker:
 	fi
 
 check-registry:
-	@if [ -z "$$DEV_REGISTRY" ]; then \
-	  echo "DEV_REGISTRY is not exported, try:  make dev-registry"; \
+	@if [ -z "$$DOCKER_REGISTRY" ]; then \
+	  echo "DOCKER_REGISTRY is not exported, try:  make dev-environment"; \
 	exit 2; \
 	fi
 
-check-deisctl:
-	@if [ -z $$(which deisctl) ]; then \
-	  echo "Missing \`deisctl\` utility, please install from https://github.com/deis/deis"; \
+check-awk:
+	@if [ -z "$$(which awk)" ]; then \
+	  echo "awk is not installed, try:  sudo apt-get install gawk"; \
+	exit 2; \
 	fi

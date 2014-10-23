@@ -1,1 +1,1 @@
-{{ .deis_store_adminKeyring }}
+{{ .ceph_adminKeyring }}

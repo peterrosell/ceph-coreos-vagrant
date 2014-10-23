@@ -1,11 +1,12 @@
 #!/bin/bash
-# Borrows heavily from Seán C. McCord's https://github.com/Ulexus/docker-ceph repository
+# Borrows almost everything from https://github.com/deis/deis
+# that borrows heavily from Seán C. McCord's https://github.com/Ulexus/docker-ceph repository
 
 set -e
 
 ETCD_PORT=${ETCD_PORT:-4001}
 ETCD="$HOST:$ETCD_PORT"
-ETCD_PATH=${ETCD_PATH:-/deis/store}
+ETCD_PATH=${ETCD_PATH:-/ceph}
 NUM_STORES=${NUM_STORES:-3}
 PG_NUM=${PG_NUM:-128} # default for 3 OSDs
 HOSTNAME=`hostname`
