@@ -8,9 +8,11 @@ RestartSec=10s
 TimeoutStartSec=0
 EnvironmentFile=/etc/environment
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
+Environment="HOST=172.21.13.101"
+ExecStartPre=/usr/bin/echo "HOST=${HOST}  CORE=${COREOS_PRIVATE_IPV4}"
 ExecStartPre=-/usr/bin/docker kill ceph-monitor
 ExecStartPre=-/usr/bin/docker rm ceph-monitor
 ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-monitor:latest
-ExecStart=/usr/bin/docker run --rm --name ceph-monitor ${DOCKER_REGISTRY}ceph-monitor
+ExecStart=/usr/bin/docker run --rm --name ceph-monitor --env HOST=${COREOS_PRIVATE_IPV4} ${DOCKER_REGISTRY}ceph-monitor
 ExecStop=/usr/bin/docker stop ceph-monitor
 X-Conflicts=ceph-monitor.service

@@ -2,8 +2,7 @@ include includes.mk
 
 FLEET_VERSION=0.8.3
 
-TEMPLATE_IMAGES=monitor
-#osd 
+TEMPLATE_IMAGES=monitor osd 
 # monitor gateway
 BUILT_IMAGES=base $(TEMPLATE_IMAGES)
 
@@ -79,8 +78,8 @@ cloud-init:
 
 services-from-templates: check-awk
 	$(foreach I, $(TEMPLATES), \
-		@awk '{while(match($$0,"[$$][$$]{[^}]*}")) {var=substr($$0,RSTART+3,RLENGTH -4);gsub("[$$][$$]{"var"}",ENVIRON[var])}}1' < services/templates/$I > services/$I.service && \
-		echo 'Created service file: $I.service' \
+		awk '{while(match($$0,"[$$][$$]{[^}]*}")) {var=substr($$0,RSTART+3,RLENGTH -4);gsub("[$$][$$]{"var"}",ENVIRON[var])}}1' < services/templates/$I > services/$I.service && \
+		echo 'Created service file: $I.service' ; \
 	)
 
 install-fleet:

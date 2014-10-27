@@ -1,0 +1,17 @@
+[Unit]
+Description=Ceph Monitor
+#After=ceph-osd.service
+
+[Service]
+Restart=always
+RestartSec=10s
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
+Environment="HOST=172.21.13.101"
+ExecStartPre=/usr/bin/echo "HOST=${HOST}  CORE=${COREOS_PRIVATE_IPV4}"
+ExecStartPre=-/usr/bin/docker kill ceph-osd
+ExecStartPre=-/usr/bin/docker rm ceph-osd
+ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:latest
+ExecStart=/usr/bin/docker run --rm --name ceph-osd --env HOST=${COREOS_PRIVATE_IPV4} -v /var/lib/ceph/osd=/disks/logical/disk_a ${DOCKER_REGISTRY}ceph-osd
+ExecStop=/usr/bin/docker stop ceph-osd

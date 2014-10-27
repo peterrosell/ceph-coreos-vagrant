@@ -1,4 +1,4 @@
-{{ range $key := .ceph_hosts }}{{ Base $key.Key }}      {{ $key.Value }}
+{{ range $key := gets "/ceph/hosts/*" }}{{ base $key.Key }}      {{ $key.Value }}
 {{ end }}
 
 ff00::0 ip6-mcastprefix

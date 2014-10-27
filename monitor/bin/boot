@@ -2,7 +2,7 @@
 # Borrows almost everything from https://github.com/deis/deis
 # that borrows heavily from Seán C. McCord's https://github.com/Ulexus/docker-ceph repository
 
-set -e
+#set -e
 
 ETCD_PORT=${ETCD_PORT:-4001}
 ETCD="$HOST:$ETCD_PORT"
@@ -11,9 +11,13 @@ NUM_STORES=${NUM_STORES:-3}
 PG_NUM=${PG_NUM:-128} # default for 3 OSDs
 HOSTNAME=`hostname`
 
+echo "$ETCD  host=$HOST hostname=$HOSTNAME $COREOS_PRIVATE_IPV4"
+
 function etcd_set_default {
   etcdctl --no-sync -C $ETCD mk $ETCD_PATH/$1 $2 >/dev/null 2>&1 || true
 }
+
+echo "1HEJ HEJ $1"
 
 if ! etcdctl --no-sync -C $ETCD get ${ETCD_PATH}/monSetupComplete >/dev/null 2>&1 ; then
   echo "store-monitor: Ceph hasn't yet been deployed. Trying to deploy..."
@@ -55,10 +59,14 @@ if ! etcdctl --no-sync -C $ETCD get ${ETCD_PATH}/monSetupComplete >/dev/null 2>&
   fi
 fi
 
+echo "2HEJ HEJ $1"
+
 until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1; do
   echo "store-monitor: waiting for confd to write initial templates..."
   sleep 5
 done
+
+echo "3HEJ HEJ $1"
 
 # If we don't have a monitor keyring, this is a new monitor
 if [ ! -e /var/lib/ceph/mon/ceph-${HOSTNAME}/keyring ]; then
@@ -80,4 +88,9 @@ if [ ! -e /var/lib/ceph/mon/ceph-${HOSTNAME}/keyring ]; then
   rm /tmp/ceph.mon.keyring
 fi
 
-exec /usr/bin/ceph-mon -d -i ${HOSTNAME} --public-addr ${HOST}:6789
+echo "4HEJ HEJ $1"
+if [ $1 == 'ceph-mon' ]; then
+  exec /usr/bin/ceph-mon -d -i ${HOSTNAME} --public-addr ${HOST}:6789
+else
+  exec $@
+fi

@@ -4,11 +4,13 @@
 
 ETCD_PORT=${ETCD_PORT:-4001}
 ETCD="$HOST:$ETCD_PORT"
+ETCD_PATH=${ETCD_PATH:-/ceph}
 
 HOSTNAME=`hostname`
 OSD_ID=''
 
-until etcdctl --no-sync -C $ETCD get /deis/store/monSetupComplete >/dev/null 2>&1 ; do
+
+until etcdctl --no-sync -C $ETCD get $ETCD_PATH/monSetupComplete >/dev/null 2>&1 ; do
   echo "store-daemon: waiting for monitor setup to complete..."
   sleep 5
 done
@@ -18,13 +20,18 @@ until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1 ; 
   sleep 5
 done
 
-if ! etcdctl --no-sync -C $ETCD get /deis/store/osds/$HOST >/dev/null 2>&1 ; then
+if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST >/dev/null 2>&1 ; then
   echo "store-daemon: creating OSD..."
 
   # sleep to actually let the mons come up
   sleep 10
 
-  OSD_ID=`ceph osd create 2>/dev/null`
+if [ $1 != 'ceph-osd' ]; then
+  exec $@
+fi
+
+  OSD_ID=`ceph osd create`
+#  OSD_ID=`ceph osd create 2>/dev/null`
 
   if ! [[ "${OSD_ID}" =~ ^-?[0-9]+$ ]] ; then
     echo "store-daemon: FATAL - We have an OSD ID that isn't an integer"
@@ -34,11 +41,11 @@ if ! etcdctl --no-sync -C $ETCD get /deis/store/osds/$HOST >/dev/null 2>&1 ; the
   fi
 
   echo "store-daemon: created OSD ${OSD_ID}"
-  etcdctl --no-sync -C $ETCD set /deis/store/osds/$HOST ${OSD_ID} >/dev/null
+  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST ${OSD_ID} >/dev/null
 fi
 
 if [ -z "${OSD_ID}" ]; then
-  OSD_ID=`etcdctl --no-sync -C $ETCD get /deis/store/osds/${HOST}`
+  OSD_ID=`etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/${HOST}`
 fi
 
 # Make sure osd directory exists
