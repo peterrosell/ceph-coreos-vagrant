@@ -77,7 +77,7 @@ cloud-init:
 	vagrant ssh -c "sudo /usr/bin/coreos-cloudinit --from-file /var/lib/coreos-vagrant/vagrantfile-user-data"
 
 services-from-templates: check-awk
-	$(foreach I, $(TEMPLATES), \
+	@$(foreach I, $(TEMPLATES), \
 		awk '{while(match($$0,"[$$][$$]{[^}]*}")) {var=substr($$0,RSTART+3,RLENGTH -4);gsub("[$$][$$]{"var"}",ENVIRON[var])}}1' < services/templates/$I > services/$I.service && \
 		echo 'Created service file: $I.service' ; \
 	)
