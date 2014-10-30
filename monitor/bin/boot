@@ -17,8 +17,6 @@ function etcd_set_default {
   etcdctl --no-sync -C $ETCD mk $ETCD_PATH/$1 $2 >/dev/null 2>&1 || true
 }
 
-echo "1HEJ HEJ $1"
-
 if ! etcdctl --no-sync -C $ETCD get ${ETCD_PATH}/monSetupComplete >/dev/null 2>&1 ; then
   echo "store-monitor: Ceph hasn't yet been deployed. Trying to deploy..."
   # let's rock and roll. we need to obtain a lock so we can ensure only one machine is trying to deploy the cluster
@@ -43,11 +41,7 @@ if ! etcdctl --no-sync -C $ETCD get ${ETCD_PATH}/monSetupComplete >/dev/null 2>&
     etcdctl --no-sync -C $ETCD set ${ETCD_PATH}/fsid ${fsid} >/dev/null
 
     # Generate initial monitor map
-    echo "1.1 HEJ HEJ "
     monmaptool --create --add ${HOSTNAME} ${HOST} --fsid ${fsid} /etc/ceph/monmap
-    echo "result=$?"
-
-    echo $(ls /etc/ceph)
 
     etcdctl --no-sync -C $ETCD set ${ETCD_PATH}/monKeyring < /etc/ceph/ceph.mon.keyring >/dev/null
     etcdctl --no-sync -C $ETCD set ${ETCD_PATH}/adminKeyring < /etc/ceph/ceph.client.admin.keyring >/dev/null
@@ -63,25 +57,16 @@ if ! etcdctl --no-sync -C $ETCD get ${ETCD_PATH}/monSetupComplete >/dev/null 2>&
   fi
 fi
 
-echo "2HEJ HEJ $1"
-
-#until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1; do
-until confd -onetime -node $ETCD -config-file /app/confd.toml ; do
+until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1; do
   echo "store-monitor: waiting for confd to write initial templates..."
   sleep 5
 done
 
-echo "3HEJ HEJ $1"
-
 # If we don't have a monitor keyring, this is a new monitor
 if [ ! -e /var/lib/ceph/mon/ceph-${HOSTNAME}/keyring ]; then
-echo "4HEJ HEJ $1"
   if [ ! -f /etc/ceph/monmap ]; then
-echo "5HEJ HEJ $1"
-    exec $@
     ceph mon getmap -o /etc/ceph/monmap
   fi
-echo "6HEJ HEJ $1"
 
   # Import the client.admin keyring and the monitor keyring into a new, temporary one
   ceph-authtool /tmp/ceph.mon.keyring --create-keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
@@ -92,13 +77,11 @@ echo "6HEJ HEJ $1"
   
   # Prepare the monitor daemon's directory with the map and keyring
   ceph-mon --mkfs -i ${HOSTNAME} --monmap /etc/ceph/monmap --keyring /tmp/ceph.mon.keyring
-  cp /tmp/ceph.mon.keyring /var/lib/ceph/mon/ceph-${HOSTNAME}/keyring
 
   # Clean up the temporary key
   rm /tmp/ceph.mon.keyring
 fi
 
-echo "7HEJ HEJ $1"
 if [ $1 == 'ceph-mon' ]; then
   exec /usr/bin/ceph-mon -d -i ${HOSTNAME} --public-addr ${HOST}:6789
 else

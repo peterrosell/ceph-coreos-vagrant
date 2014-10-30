@@ -7,6 +7,16 @@ coreos:
       addr: $public_ipv4:4001
       peer-addr: $public_ipv4:7001
   units:
+    - name: settimezone.service
+      command: start
+      content: |
+        [Unit]
+        Description=Set the timezone
+        [Service]
+        ExecStart=/usr/bin/timedatectl set-timezone Europe/Stockholm
+        RemainAfterExit=yes
+        Type=oneshot
+
     - name: prepare-ephemeral.1.service
       command: start
       content: |
