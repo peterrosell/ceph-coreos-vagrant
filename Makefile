@@ -2,8 +2,7 @@ include includes.mk
 
 FLEET_VERSION=0.8.3
 
-TEMPLATE_IMAGES=monitor osd 
-# monitor gateway
+TEMPLATE_IMAGES=monitor osd gateway
 BUILT_IMAGES=base $(TEMPLATE_IMAGES)
 
 DAEMON_IMAGE = $(IMAGE_PREFIX)ceph-daemon:$(BUILD_TAG)
@@ -13,7 +12,6 @@ MONITOR_DEV_IMAGE = $(DEV_REGISTRY)/$(MONITOR_IMAGE)
 GATEWAY_IMAGE = $(IMAGE_PREFIX)ceph-gateway:$(BUILD_TAG)
 GATEWAY_DEV_IMAGE = $(DEV_REGISTRY)/$(GATEWAY_IMAGE)
 
-TEMPL=asdf wef wefw
 TEMPLATES := $(shell cd services/templates && find *)
 
 discovery-url:

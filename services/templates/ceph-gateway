@@ -1,0 +1,16 @@
+[Unit]
+Description=ceph-gateway
+
+[Service]
+EnvironmentFile=/etc/environment
+TimeoutStartSec=20m
+ExecStartPre=-/usr/bin/docker kill ceph-gateway
+ExecStartPre=-/usr/bin/docker rm ceph-gateway
+ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-gateway:latest
+ExecStart=/usr/bin/docker run --rm --name ceph-gateway --net host --env HOST=${COREOS_PRIVATE_IPV4} --env EXTERNAL_PORT=8888 -p 8888:8888 ${DOCKER_REGISTRY}ceph-gateway
+ExecStopPost=-/usr/bin/docker rm -f ceph-gateway
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
