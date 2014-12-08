@@ -15,6 +15,9 @@ ExecStartPre=-/usr/bin/docker kill ceph-monitor
 ExecStartPre=-/usr/bin/docker rm ceph-monitor
 ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-monitor:latest
 ExecStartPre=/bin/sh -c "etcdctl set /ceph/hosts/$COREOS_PRIVATE_IPV4 `hostname` >/dev/null"
-ExecStart=/usr/bin/docker run --rm --name ceph-monitor --net host --volumes-from=ceph-monitor-data --env HOST=${COREOS_PRIVATE_IPV4} ${DOCKER_REGISTRY}ceph-monitor
+ExecStart=/usr/bin/docker run --rm --name ceph-monitor --net=host --volumes-from=ceph-monitor-data --env HOST=${COREOS_PRIVATE_IPV4} ${DOCKER_REGISTRY}ceph-monitor
 ExecStop=/usr/bin/docker stop ceph-monitor
-X-Conflicts=ceph-monitor.service
+
+[X-Fleet]
+MachineMetadata="type=storage"
+Global=true

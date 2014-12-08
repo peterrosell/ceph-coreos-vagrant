@@ -10,7 +10,7 @@ CONFIG = File.join(File.dirname(__FILE__), "config.rb")
 
 # Defaults for config options defined in CONFIG
 $num_instances = 1
-$update_channel = "alpha"
+$update_channel = "stable"
 $enable_serial_logging = false
 $vb_gui = false
 $vb_memory = 1024
@@ -19,7 +19,7 @@ COREOS_VERSION = "444.0.0"
 NETWORK_BASE = "172.21.13"
 ADDITIONAL_DISK_PATH = "extra_disks"
 # Size in Megabytes
-$size_of_extra_disk = 8096
+$size_of_extra_disk = 12132
 
 # Attempt to apply the deprecated environment variable NUM_INSTANCES to
 # $num_instances while allowing config.rb to override it
@@ -90,7 +90,7 @@ Vagrant.configure("2") do |config|
         vb.cpus = $vb_cpus
 
         unless File.exist?("#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi")
-          vb.customize ["storagectl", :id, "--add", "sata", "--name", "SATA Controller" , "--portcount", 2, "--hostiocache", "on"]
+          vb.customize ["storagectl", :id, "--add", "sata", "--name", "SATA Controller" , "--portcount", 3, "--hostiocache", "on"]
 
           vb.customize ['createhd', '--filename', "#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi", '--size', $size_of_extra_disk]
           vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, 
@@ -103,6 +103,12 @@ Vagrant.configure("2") do |config|
           '--type', 'hdd', '--setuuid', 'bbbe7f5a-b8cf-457e-9df4-e3f3f26d1e11',
           '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi"]
         end
+        unless File.exist?("#{ADDITIONAL_DISK_PATH}/server#{i}c.vdi")
+          vb.customize ['createhd', '--filename', "#{ADDITIONAL_DISK_PATH}/server#{i}c.vdi", '--size', $size_of_extra_disk]
+          vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 3, '--device', 0, 
+          '--type', 'hdd', '--setuuid', 'ccce7f5a-b8cf-457e-9df4-e3f3f26d1e11',
+          '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}c.vdi"]
+        end
       end
 
       ip = "#{NETWORK_BASE}.#{i+100}"
@@ -111,13 +117,13 @@ Vagrant.configure("2") do |config|
       # Uncomment below to enable NFS for sharing the host machine into the coreos-vagrant VM.
       #config.vm.synced_folder ".", "/home/core/share", id: "core", :nfs => true, :mount_options => ['nolock,vers=3,udp']
 
-      if File.exist?(CLOUD_CONFIG_PATH)
+#      if File.exist?(CLOUD_CONFIG_PATH)-#{i}
         config.vm.provision :file, :source => "ln_disk.sh", :destination => "/tmp/ln_disk.sh"
         config.vm.provision :shell, :inline => "chmod +x /tmp/ln_disk.sh", :privileged => true
 
-        config.vm.provision :file, :source => "#{CLOUD_CONFIG_PATH}", :destination => "/tmp/vagrantfile-user-data"
+        config.vm.provision :file, :source => "#{CLOUD_CONFIG_PATH}-#{i}", :destination => "/tmp/vagrantfile-user-data"
         config.vm.provision :shell, :inline => "mv /tmp/vagrantfile-user-data /var/lib/coreos-vagrant/", :privileged => true
-      end
+#      end
       config.vm.provision :shell, :inline => "mkdir -p /disks/logical/host", :privileged => true
     end
   end

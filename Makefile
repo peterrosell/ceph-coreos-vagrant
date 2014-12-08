@@ -13,16 +13,19 @@ GATEWAY_IMAGE = $(IMAGE_PREFIX)ceph-gateway:$(BUILD_TAG)
 GATEWAY_DEV_IMAGE = $(DEV_REGISTRY)/$(GATEWAY_IMAGE)
 
 TEMPLATES := $(shell cd services/templates && find *)
+SERVERS :=1 2
+
+#		cat user-data.template | sed -e "s,# discovery: https://discovery.etcd.io/,discovery: https://discovery.etcd.io/)," | sed -e "s,discovery: https://discovery.etcd.io/.*,discovery: $$(cat discovery.url)," > \user-data-$(I) ; \
 
 discovery-url:
-	@cat user-data.template | \
-	sed -e "s,# discovery: https://discovery.etcd.io/,discovery: https://discovery.etcd.io/)," | \
-	sed -e "s,discovery: https://discovery.etcd.io/.*,discovery: $$(curl -s -w '\n' https://discovery.etcd.io/new)," > \
-	user-data
-
-vagrant: discovery-url
-	vagrant up
-#	rm user-data
+	@curl -s -w '\n' https://discovery.etcd.io/new > discovery.url
+	$(foreach I, $(SERVERS), \
+		cat user-data.template | \
+		sed -e "s,# discovery: https://discovery.etcd.io/,discovery: https://discovery.etcd.io/," | \
+		sed -e "s,discovery: https://discovery.etcd.io/.*,discovery: $$(cat discovery.url)," | \
+		sed -e "s/__ID__/$(I)/" \
+		> user-data-$(I) ; \
+	)
 
 build: check-docker
 	@# Build base first due to dependencies
@@ -91,9 +94,24 @@ install-fleet:
 register-ssh-key:
 	vagrant ssh-config | sed -n "s/IdentityFile//gp" | xargs ssh-add
 
-show-fleet-tunnel:
-
-dev-environment: register-ssh-key show-fleet-tunnel
+show-environment:
 	@echo '   Set these environment variables:'
 	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp"):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp")'
 	@echo 'export DOCKER_REGISTRY="registry.emendatus.com:5000/"'
+
+dev-environment: register-ssh-key show-environment
+
+clean-old-run:
+	@rm $(HOME)/.fleetctl/known_hosts
+
+start-services:
+	@(cd services && fleetctl start ceph-monitor.service)
+	@(cd services && fleetctl start ceph-osd_disk_a.service) 
+	@(cd services && fleetctl start ceph-osd_disk_b.service) 
+
+start-cluster:
+	vagrant up
+#	rm user-data
+
+run-all: discovery-url start-cluster services-from-templates start-services
+

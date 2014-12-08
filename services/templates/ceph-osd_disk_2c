@@ -1,5 +1,5 @@
 [Unit]
-Description=Ceph Monitor - host disk
+Description=Ceph Monitor - disk c
 #After=ceph-osd.service
 
 [Service]
@@ -8,12 +8,12 @@ RestartSec=10s
 TimeoutStartSec=0
 EnvironmentFile=/etc/environment
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
-Environment="OSD_DISK=host"
+Environment="OSD_DISK=disk_c"
 ExecStartPre=-/usr/bin/docker kill ceph-osd-${OSD_DISK}
 ExecStartPre=-/usr/bin/docker rm ceph-osd-${OSD_DISK}
-ExecStartPre=-/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:latest
+ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:latest
 ExecStart=/usr/bin/docker run --rm --name ceph-osd-${OSD_DISK} --net=host --env "HOST=${COREOS_PRIVATE_IPV4}" --env "OSD_DISK=${OSD_DISK}" -v /disks/logical/${OSD_DISK}:/var/lib/ceph/osd ${DOCKER_REGISTRY}ceph-osd:latest
 ExecStop=/usr/bin/docker stop ceph-osd-${OSD_DISK}
 
 [X-Fleet]
-MachineMetadata="storage=1"
+MachineMetadata="storage=2"

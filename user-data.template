@@ -97,6 +97,46 @@ coreos:
         Where=/disks/logical/disk_b
         Type=btrfs
 
+    - name: prepare-ephemeral.3.service
+      command: start
+      content: |
+        [Unit]
+        Description=Formats the ephemeral drive
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStartPre=/usr/bin/mkdir -p /disks/physical
+        ExecStart=/tmp/ln_disk.sh ccce7f5a /disks/physical/disk_c
+        SuccessExitStatus=0 203
+
+    - name: format-ephemeral.3.service
+      command: start
+      content: |
+        [Unit]
+        Description=Formats the ephemeral drive
+        Requires=prepare-ephemeral.3.service
+        After=prepare-ephemeral.3.service
+        [Service]
+        Type=oneshot
+        RemainAfterExit=yes
+        ExecStart=/usr/sbin/mkfs.btrfs --label disk_c /disks/physical/disk_c
+        ExecStartPost=/usr/bin/mkdir -p /disks/logical/disk_c
+        SuccessExitStatus=0 1
+
+    - name: disks-logical-disk_c.mount
+      command: start
+      content: |
+        [Unit]
+        Description=Mount ephemeral.3 to /disks/logical/disk_c
+        Requires=format-ephemeral.3.service
+        After=format-ephemeral.3.service
+        Before=docker.service
+        ConditionPathIsDirectory=/disks/logical/disk_c
+        [Mount]
+        What=/disks/physical/disk_c
+        Where=/disks/logical/disk_c
+        Type=btrfs
+
     - name: etcd.service
       command: start
 
@@ -125,3 +165,9 @@ coreos:
 
         [Install]
         WantedBy=sockets.target
+write_files:
+  - path: /etc/fleet/fleet.conf
+    permissions: 0644
+    owner: root
+    content: |
+      metadata="type=storage,storage=__ID__"

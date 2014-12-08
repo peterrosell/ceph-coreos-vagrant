@@ -5,7 +5,7 @@
 # after the equals sign..
 
 # Size of the CoreOS cluster created by Vagrant
-$num_instances=1
+$num_instances=2
 
 # Official CoreOS channel from which updates should be downloaded
 $update_channel='stable'
@@ -25,5 +25,5 @@ $update_channel='stable'
 
 # Setting for VirtualBox VMs
 #$vb_gui = false
-#$vb_memory = 1024
+$vb_memory = 2048
 #$vb_cpus = 1
