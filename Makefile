@@ -96,8 +96,8 @@ register-ssh-key:
 
 show-environment:
 	@echo '   Set these environment variables:'
-	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp"):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp")'
-	@echo 'export DOCKER_REGISTRY="registry.emendatus.com:5000/"'
+	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p')'
+	@echo 'export DOCKER_REGISTRY="lp123.pagero.local:5000/"'
 
 dev-environment: register-ssh-key show-environment
 

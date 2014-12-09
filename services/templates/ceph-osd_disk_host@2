@@ -1,6 +1,5 @@
 [Unit]
-Description=Ceph Monitor - host disk
-#After=ceph-osd.service
+Description=Ceph OSD - host disk
 
 [Service]
 Restart=always
@@ -16,4 +15,4 @@ ExecStart=/usr/bin/docker run --rm --name ceph-osd-${OSD_DISK} --net=host --env 
 ExecStop=/usr/bin/docker stop ceph-osd-${OSD_DISK}
 
 [X-Fleet]
-MachineMetadata="storage=1"
+MachineMetadata="storage=2"
