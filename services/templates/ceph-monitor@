@@ -1,0 +1,19 @@
+[Unit]
+Description=Ceph Monitor %i
+
+[Service]
+Restart=always
+RestartSec=10s
+TimeoutStartSec=0
+EnvironmentFile=/etc/environment
+Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
+ExecStartPre=/bin/sh -c "docker inspect ceph-monitor-data-%i >/dev/null 2>&1 || docker run --name ceph-monitor-data-%i -v /etc/ceph -v /var/lib/ceph/mon ubuntu-debootstrap:14.04 /bin/true"
+ExecStartPre=-/usr/bin/docker kill ceph-monitor-%i
+ExecStartPre=-/usr/bin/docker rm ceph-monitor-%i
+ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-monitor:latest
+ExecStartPre=/bin/sh -c "etcdctl set /ceph/hosts/$COREOS_PRIVATE_IPV4 `hostname` >/dev/null"
+ExecStart=/usr/bin/docker run --rm --name ceph-monitor-%i --net=host --volumes-from=ceph-monitor-data-%i --env HOST=${COREOS_PRIVATE_IPV4} ${DOCKER_REGISTRY}ceph-monitor
+ExecStop=/usr/bin/docker stop ceph-monitor-%i
+
+[X-Fleet]
+MachineMetadata="storage=%i" "type=storage"

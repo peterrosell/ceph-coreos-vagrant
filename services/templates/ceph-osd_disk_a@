@@ -1,5 +1,5 @@
 [Unit]
-Description=Ceph OSD - disk c
+Description=Ceph OSD %i - disk a
 
 [Service]
 Restart=always
@@ -7,7 +7,7 @@ RestartSec=10s
 TimeoutStartSec=0
 EnvironmentFile=/etc/environment
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
-Environment="OSD_DISK=disk_c"
+Environment="OSD_DISK=disk_a"
 ExecStartPre=-/usr/bin/docker kill ceph-osd-${OSD_DISK}
 ExecStartPre=-/usr/bin/docker rm ceph-osd-${OSD_DISK}
 ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:latest
@@ -15,5 +15,5 @@ ExecStart=/usr/bin/docker run --rm --name ceph-osd-${OSD_DISK} --net=host --env 
 ExecStop=/usr/bin/docker stop ceph-osd-${OSD_DISK}
 
 [X-Fleet]
-MachineMetadata="storage=1"
+MachineMetadata="type=storage" "storage=%i" "disk_a=true"
 

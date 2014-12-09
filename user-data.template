@@ -170,4 +170,4 @@ write_files:
     permissions: 0644
     owner: root
     content: |
-      metadata="type=storage,storage=__ID__"
+      metadata="type=storage,storage=__ID__,disk_a=true,disk_b=true,disk_c=true"

@@ -1,3 +1,6 @@
 .vagrant
 extra_disks
 .idea
+user-data-*
+gen/
+*/Dockerfile
