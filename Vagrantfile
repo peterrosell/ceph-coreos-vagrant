@@ -94,19 +94,19 @@ Vagrant.configure("2") do |config|
 
           vb.customize ['createhd', '--filename', "#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi", '--size', $size_of_extra_disk]
           vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 1, '--device', 0, 
-          '--type', 'hdd', '--setuuid', 'aaae7f5a-b8cf-457e-9df4-e3f3f26d1e11',
+          '--type', 'hdd', '--setuuid', "#{i}a000000-b8cf-457e-9df4-e3f3f26d1e11",
           '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi"]
         end
         unless File.exist?("#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi")
           vb.customize ['createhd', '--filename', "#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi", '--size', $size_of_extra_disk]
           vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 2, '--device', 0, 
-          '--type', 'hdd', '--setuuid', 'bbbe7f5a-b8cf-457e-9df4-e3f3f26d1e11',
+          '--type', 'hdd', '--setuuid', "#{i}b000000-b8cf-457e-9df4-e3f3f26d1e11",
           '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}b.vdi"]
         end
         unless File.exist?("#{ADDITIONAL_DISK_PATH}/server#{i}c.vdi")
           vb.customize ['createhd', '--filename', "#{ADDITIONAL_DISK_PATH}/server#{i}c.vdi", '--size', $size_of_extra_disk]
           vb.customize ['storageattach', :id, '--storagectl', 'SATA Controller', '--port', 3, '--device', 0, 
-          '--type', 'hdd', '--setuuid', 'ccce7f5a-b8cf-457e-9df4-e3f3f26d1e11',
+          '--type', 'hdd', '--setuuid', "#{i}c000000-b8cf-457e-9df4-e3f3f26d1e11",
           '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}c.vdi"]
         end
       end
