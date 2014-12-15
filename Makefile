@@ -97,11 +97,17 @@ register-ssh-key:
 	@echo "Registered ssh key"
 
 show-environment:
-	@echo '   Set these environment variables:'
-	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p')'
-	@echo 'export DOCKER_REGISTRY="registry.emendatus.com:5000/"'
+	@echo '   Set these environment variables, they are written to file ./env:'
+	@echo '' > ./env
+	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p')' >> ./env
+	@echo 'export DOCKER_REGISTRY="10.13.18.161:5000/"' >> ./env
+	@cat ./env
 
 dev-environment: register-ssh-key show-environment
+
+show-machines:
+	fleetctl list-machines
+
 
 clean-old-run:
 	@if [ -e $(HOME)/.fleetctl/known_hosts ]; then rm $(HOME)/.fleetctl/known_hosts; fi
@@ -111,7 +117,7 @@ start-services:
 	@(cd gen/services && fleetctl start ceph-osd_disk_a.service) 
 	@(cd gen/services && fleetctl start ceph-osd_disk_b.service) 
 
-create-cluster: clean-old-run discovery-url start-cluster register-ssh-key show-environment
+create-cluster: clean-old-run discovery-url start-cluster register-ssh-key show-environment show-machines
 
 start-cluster:
 	vagrant up
