@@ -27,8 +27,8 @@ if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST-${OSD_DISK} >/dev/null
   # sleep to actually let the mons come up
   sleep 10
 
-  OSD_ID=`ceph osd create`
-#  OSD_ID=`ceph osd create 2>/dev/null`
+#  OSD_ID=`ceph osd create`
+  OSD_ID=`ceph osd create 2>/dev/null`
 
   if ! [[ "${OSD_ID}" =~ ^-?[0-9]+$ ]] ; then
     echo "store-daemon: FATAL - We have an OSD ID that isn't an integer"
@@ -39,6 +39,12 @@ if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST-${OSD_DISK} >/dev/null
 
   echo "store-daemon: created OSD ${OSD_ID}"
   etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST-${OSD_DISK} ${OSD_ID} >/dev/null
+
+  # Recreate config files
+  until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1 ; do
+    echo "store-daemon: waiting for confd to write initial templates..."
+    sleep 5
+  done
 fi
 
 if [ -z "${OSD_ID}" ]; then
