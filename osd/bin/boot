@@ -21,7 +21,7 @@ until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1 ; 
 done
 
 echo "Checking OSD id for host ${HOST}..."
-if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST-${OSD_DISK} >/dev/null 2>&1 ; then
+if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST/${OSD_DISK}/id >/dev/null 2>&1 ; then
   echo "store-daemon: creating OSD..."
 
   # sleep to actually let the mons come up
@@ -38,7 +38,9 @@ if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST-${OSD_DISK} >/dev/null
   fi
 
   echo "store-daemon: created OSD ${OSD_ID}"
-  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST-${OSD_DISK} ${OSD_ID} >/dev/null
+  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/host ${HOSTNAME} >/dev/null
+  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/port $((6800 + ($OSD_ID * 10) )) >/dev/null
+  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/id ${OSD_ID} >/dev/null
 
   # Recreate config files
   until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1 ; do
@@ -48,7 +50,7 @@ if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST-${OSD_DISK} >/dev/null
 fi
 
 if [ -z "${OSD_ID}" ]; then
-  OSD_ID=`etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/${HOST}-${OSD_DISK}`
+  OSD_ID=`etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/${HOST}/${OSD_DISK}/id`
 fi
 
 # Make sure osd directory exists
