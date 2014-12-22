@@ -2,6 +2,10 @@
 # Borrows almost everything from https://github.com/deis/deis
 # that borrows heavily from Seán C. McCord's https://github.com/Ulexus/docker-ceph repository
 
+if [ $1 == 'no-bootstrap' ]; then
+  exec bash
+fi
+
 ETCD_PORT=${ETCD_PORT:-4001}
 ETCD="$HOST:$ETCD_PORT"
 ETCD_PATH=${ETCD_PATH:-/ceph}
@@ -39,7 +43,8 @@ if ! etcdctl --no-sync -C $ETCD get $ETCD_PATH/osds/$HOST/${OSD_DISK}/id >/dev/n
 
   echo "store-daemon: created OSD ${OSD_ID}"
   etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/host ${HOSTNAME} >/dev/null
-  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/port $((6800 + ($OSD_ID * 10) )) >/dev/null
+  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/public_port $((6800 + ($OSD_ID * 10) )) >/dev/null
+  etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/cluster_port $((6800 + ($OSD_ID * 10 + 1) )) >/dev/null
   etcdctl --no-sync -C $ETCD set $ETCD_PATH/osds/$HOST/${OSD_DISK}/id ${OSD_ID} >/dev/null
 
   # Recreate config files

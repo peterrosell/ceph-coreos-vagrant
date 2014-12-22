@@ -2,6 +2,10 @@
 # Borrows almost everything from https://github.com/deis/deis
 # that borrows heavily from Seán C. McCord's https://github.com/Ulexus/docker-ceph repository
 
+if [ $1 == 'no-bootstrap' ]; then
+  exec bash
+fi
+
 #set -e
 
 ETCD_PORT=${ETCD_PORT:-4001}
