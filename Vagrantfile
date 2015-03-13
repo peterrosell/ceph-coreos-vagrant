@@ -80,14 +80,20 @@ Vagrant.configure("2") do |config|
         config.vm.network "forwarded_port", guest: 2375, host: ($expose_docker_tcp + i - 1), auto_correct: true
       end
 
-      config.vm.provider :vmware_fusion do |vb|
-        vb.gui = $vb_gui
-      end
+#      config.vm.provider :vmware_fusion do |vb|
+#        vb.gui = $vb_gui
+#      end
+
+      ip = "#{NETWORK_BASE}.#{i+100}"
+      config.vm.network :private_network, ip: ip, virtualbox__intnet: true
 
       config.vm.provider :virtualbox do |vb|
         vb.gui = $vb_gui
         vb.memory = $vb_memory
         vb.cpus = $vb_cpus
+        vb.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        vb.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+#        vb.customize ["modifyvm", :id, "--nictype1", "virtio"]
 
         unless File.exist?("#{ADDITIONAL_DISK_PATH}/server#{i}a.vdi")
           vb.customize ["storagectl", :id, "--add", "sata", "--name", "SATA Controller" , "--portcount", 3, "--hostiocache", "on"]
@@ -110,9 +116,6 @@ Vagrant.configure("2") do |config|
           '--medium', "#{ADDITIONAL_DISK_PATH}/server#{i}c.vdi"]
         end
       end
-
-      ip = "#{NETWORK_BASE}.#{i+100}"
-      config.vm.network :private_network, ip: ip
 
       # Uncomment below to enable NFS for sharing the host machine into the coreos-vagrant VM.
       #config.vm.synced_folder ".", "/home/core/share", id: "core", :nfs => true, :mount_options => ['nolock,vers=3,udp']
