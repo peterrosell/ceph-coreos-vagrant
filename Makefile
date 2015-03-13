@@ -1,8 +1,8 @@
 include includes.mk
 
-FLEET_VERSION=0.8.3
+FLEET_VERSION=0.9.1
 
-TEMPLATE_IMAGES=monitor osd gateway
+TEMPLATE_IMAGES=monitor osd gateway metadata
 BUILT_IMAGES=base $(TEMPLATE_IMAGES)
 
 DAEMON_IMAGE = $(IMAGE_PREFIX)ceph-daemon:$(BUILD_TAG)
@@ -33,14 +33,14 @@ build: check-docker
 	$(foreach I, $(TEMPLATE_IMAGES), \
 		sed -e "s/#FROM is generated dynamically by the Makefile/FROM ceph-base:${BUILD_TAG}/g" $(I)/Dockerfile.template > $(I)/Dockerfile ; \
 		docker build -t ceph-$(I):$(BUILD_TAG) $(I)/ ; \
-		rm $(I)/Dockerfile ; \
 	)
+#		rm $(I)/Dockerfile ; \
 
 push: check-docker check-registry 
 	$(foreach I, $(BUILT_IMAGES), \
-		docker tag ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):$(BUILD_TAG) ; \
+		docker tag -f ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):$(BUILD_TAG) ; \
 		docker push $(IMAGE_PREFIX)ceph-$(I):$(BUILD_TAG) ; \
-		docker tag ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):latest ; \
+		docker tag -f ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):latest ; \
 		docker push $(IMAGE_PREFIX)ceph-$(I):latest ; \
 	)
 
@@ -100,7 +100,7 @@ show-environment:
 	@echo '   Set these environment variables, they are written to file ./env:'
 	@echo '' > ./env
 	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p')' >> ./env
-	@echo 'export DOCKER_REGISTRY="silver.local.biskvi.net:5000/"' >> ./env
+	@echo 'export DOCKER_REGISTRY="$MY_DOCKER_REGISTRY/"' >> ./env
 	@cat ./env
 
 dev-environment: register-ssh-key show-environment
@@ -108,16 +108,38 @@ dev-environment: register-ssh-key show-environment
 show-machines:
 	fleetctl list-machines
 
+watch-cluster:
+	watch -n .5 'fleetctl list-units ; echo "" ; fleetctl list-unit-files'
 
 clean-old-run:
 	@if [ -e $(HOME)/.fleetctl/known_hosts ]; then rm $(HOME)/.fleetctl/known_hosts; fi
 
 start-services:
-	@(cd gen/services && fleetctl start ceph-monitor.service)
-	@(cd gen/services && fleetctl start ceph-osd_disk_a.service) 
-	@(cd gen/services && fleetctl start ceph-osd_disk_b.service) 
+	@(cd gen/services && fleetctl start ceph-monitor@1.service)
+	@(cd gen/services && fleetctl start ceph-osd_disk_a@1.service) 
+#	@(cd gen/services && fleetctl start ceph-osd_disk_b@1.service) 
+#	@(cd gen/services && fleetctl start ceph-osd_disk_c@1.service) 
+	@(cd gen/services && fleetctl start ceph-osd_disk_a@2.service) 
+#	@(cd gen/services && fleetctl start ceph-osd_disk_b@2.service) 
+#	@(cd gen/services && fleetctl start ceph-osd_disk_c@2.service) 
+	@(cd gen/services && fleetctl start ceph-osd_disk_a@3.service) 
+#	@(cd gen/services && fleetctl start ceph-osd_disk_b@3.service) 
+#	@(cd gen/services && fleetctl start ceph-osd_disk_c@3.service) 
+	@(cd gen/services && fleetctl start ceph-gateway@3.service) 
+
+create-s3-test-user:
+	vagrant ssh core-03 -- -t docker exec -it ceph-gateway radosgw-admin user create --uid=johndoe --display-name="John Doe" --email=john@example.com
+
+install-dragondisk:
+	@(cd gen &&	curl http://download.dragondisk.com/dragondisk-1.0.5-linux-i386.tar.gz | tar xz)
+
+start-dragondisk:
+	gen/dragondisk/dragondisk
 
 create-cluster: clean-old-run discovery-url start-cluster register-ssh-key show-environment show-machines
+
+destroy-cluster:
+	vagrant destroy
 
 start-cluster:
 	vagrant up

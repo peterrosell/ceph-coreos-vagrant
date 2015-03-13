@@ -30,5 +30,6 @@ RUN a2dissite 000-default.conf
 
 WORKDIR /app
 EXPOSE 8888
-CMD ["/app/bin/boot"]
+ENTRYPOINT ["/app/bin/boot"]
+CMD ["gateway"]
 ADD bin/boot /app/bin/boot

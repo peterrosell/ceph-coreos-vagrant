@@ -165,6 +165,24 @@ coreos:
 
         [Install]
         WantedBy=sockets.target
+    - name: docker.service
+      command: restart
+      content: |
+        [Unit]
+        Description=Docker Application Container Engine 
+        Documentation=http://docs.docker.io
+        After=network.target
+        [Service]
+        ExecStartPre=/bin/mount --make-rprivate /
+        # Run docker but don't have docker automatically restart
+        # containers. This is a job for systemd and unit files.
+        # --ipv6 --fixed-cidr-v6="2001:16d8:ff00:85db:000__ID__::/80"
+        ExecStart=/usr/bin/docker --daemon --host=fd:// --insecure-registry="0.0.0.0/0"
+
+        [Install]
+        WantedBy=multi-user.target
+
+
 write_files:
   - path: /etc/fleet/fleet.conf
     permissions: 0644

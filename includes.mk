@@ -13,7 +13,7 @@ endef
 ifdef DOCKER_REGISTRY
   REPOSITORY = $(DOCKER_REGISTRY)
 else
-  REPOSITORY = peterrosell/
+  REPOSITORY = $(MY_DOCKER_REGISTRY)/
 endif
 SELF_DIR := $(dir $(lastword $(MAKEFILE_LIST)))
 DOCKER_HOST = $(shell echo $$DOCKER_HOST)

@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND noninteractive
 RUN apt-get update && apt-get install -yq curl net-tools sudo
 
 RUN curl -sSL 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | apt-key add - \
-   && echo "deb http://ceph.com/debian-firefly trusty main" > /etc/apt/sources.list.d/ceph.list \
+   && echo "deb http://ceph.com/debian-giant trusty main" > /etc/apt/sources.list.d/ceph.list \
    && apt-get update 
 
 RUN apt-get install -yq ceph
@@ -19,7 +19,7 @@ RUN VERSION=0.4.6 ; URL=$(curl https://github.com/coreos/etcd/releases/download/
    && chmod +x /usr/local/bin/etcdctl
 
 # install confd
-RUN VERSION=0.6.3 ; URL=$(curl https://github.com/kelseyhightower/confd/releases/download/v$VERSION/confd-$VERSION-linux-amd64 | \
+RUN VERSION=0.7.1 ; URL=$(curl https://github.com/kelseyhightower/confd/releases/download/v$VERSION/confd-$VERSION-linux-amd64 | \
    sed 's/.*href="\(.*\)".*/\1/g' | sed 's/\&amp\;/\&/g') ; \
    curl "$URL" > /usr/local/bin/confd \
    && chmod +x /usr/local/bin/confd
