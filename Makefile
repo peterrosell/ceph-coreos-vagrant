@@ -100,11 +100,7 @@ show-environment:
 	@echo '   Set these environment variables, they are written to file ./env:'
 	@echo '' > ./env
 	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p')' >> ./env
-<<<<<<< HEAD
 	@echo 'export DOCKER_REGISTRY="$MY_DOCKER_REGISTRY/"' >> ./env
-=======
-	@echo 'export DOCKER_REGISTRY="dockerregistry:5000/"' >> ./env
->>>>>>> 19910304d4dde33e6402a5f6b75131ee245fce4e
 	@cat ./env
 
 dev-environment: register-ssh-key show-environment
