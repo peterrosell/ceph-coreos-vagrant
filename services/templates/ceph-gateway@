@@ -8,10 +8,11 @@ ExecStartPre=-/usr/bin/docker kill ceph-gateway
 ExecStartPre=-/usr/bin/docker rm ceph-gateway
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
 ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-gateway:latest
-ExecStart=/usr/bin/docker run --rm --name ceph-gateway --net=host --env HOST=${COREOS_PRIVATE_IPV4} --env EXTERNAL_PORT=8888 -p 8888:8888 ${DOCKER_REGISTRY}ceph-gateway
+ExecStart=/usr/bin/docker run --hostname ceph-gateway --rm --name ceph-gateway --env HOST=${COREOS_PRIVATE_IPV4} --env EXTERNAL_PORT=80 -p 80:8888 ${DOCKER_REGISTRY}ceph-gateway
 ExecStopPost=-/usr/bin/docker rm -f ceph-gateway
 Restart=on-failure
 RestartSec=5
 
 [Install]
 WantedBy=multi-user.target
+MachineMetadata="storage=%i" "type=storage"

@@ -77,7 +77,7 @@ test-functional:
 cloud-init:
 	vagrant ssh -c "sudo /usr/bin/coreos-cloudinit --from-file /var/lib/coreos-vagrant/vagrantfile-user-data"
 
-services-from-templates: check-awk
+generate-services-from-templates: check-awk
 	@mkdir -p gen/services
 	@$(foreach I, $(SERVICE_TEMPLATES), \
 		awk '{while(match($$0,"[$$][$$]{[^}]*}")) {var=substr($$0,RSTART+3,RLENGTH -4);gsub("[$$][$$]{"var"}",ENVIRON[var])}}1' < services/templates/$I > gen/services/$I.service && \
@@ -100,14 +100,14 @@ show-environment:
 	@echo '   Set these environment variables, they are written to file ./env:'
 	@echo '' > ./env
 	@echo 'export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p')' >> ./env
-	@echo 'export DOCKER_REGISTRY="$MY_DOCKER_REGISTRY/"' >> ./env
+	@echo 'export DOCKER_REGISTRY="${MY_DOCKER_REGISTRY}/"' >> ./env
 	@cat ./env
 
 dev-environment: register-ssh-key show-environment
 
 show-machines:
-	@export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p')
-	@fleetctl list-machines
+	@export FLEETCTL_TUNNEL=$(shell vagrant ssh-config | sed -n "s/[ ]*HostName[ ]*//gp" | sed -n '1p'):$(shell vagrant ssh-config | sed -n "s/[ ]*Port[ ]*//gp" | sed -n '1p') \
+	&& fleetctl list-machines
 
 watch-cluster:
 	watch -n .5 'fleetctl list-units ; echo "" ; fleetctl list-unit-files'
@@ -126,7 +126,14 @@ start-services:
 	@(cd gen/services && fleetctl start ceph-osd_disk_a@3.service) 
 #	@(cd gen/services && fleetctl start ceph-osd_disk_b@3.service) 
 #	@(cd gen/services && fleetctl start ceph-osd_disk_c@3.service) 
+	@(cd gen/services && fleetctl start ceph-metadata@2.service) 
 	@(cd gen/services && fleetctl start ceph-gateway@3.service) 
+
+stop-disk-services:
+	@(cd gen/services && fleetctl destroy ceph-osd_disk_a@1.service) 
+	@(cd gen/services && fleetctl destroy ceph-osd_disk_a@2.service) 
+	@(cd gen/services && fleetctl destroy ceph-osd_disk_a@3.service) 
+
 
 create-s3-test-user:
 	vagrant ssh core-03 -- -t docker exec -it ceph-gateway radosgw-admin user create --uid=johndoe --display-name="John Doe" --email=john@example.com
@@ -140,11 +147,10 @@ start-dragondisk:
 create-cluster: clean-old-run discovery-url start-cluster register-ssh-key show-environment show-machines
 
 destroy-cluster:
-	vagrant destroy
+	vagrant destroy -f
 
 start-cluster:
 	vagrant up
-#	rm user-data
 
 run-all: discovery-url start-cluster services-from-templates start-services
 

@@ -103,7 +103,7 @@ fi
 
 # spawn the service in the background
 echo "Starting RADOS gateway..."
-if [ "x$DEBUG" != "x"]; then
+if [ "x$DEBUG" != "x" ]; then
   /etc/init.d/radosgw start --verbose
 else
   /etc/init.d/radosgw start

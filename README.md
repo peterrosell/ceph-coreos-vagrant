@@ -28,7 +28,7 @@ This command will not be able to contact the cluster the first time you run it d
 Ceph's different services are installed and managed with fleetctl. To generate the service files from template run the command:
 
 ``` bash
-make services-from-templates
+make generate-services-from-templates
 ```
 
 Before you can start the services you need to register ssh key and set two environment variables. The command below registers the ssh key and creates and shows the environment variables to set. This is the env-file that must be sourced to be able to run. 
