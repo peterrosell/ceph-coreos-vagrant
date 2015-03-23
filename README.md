@@ -9,6 +9,38 @@ Run this to set your docker registry. It will be used by the makefile.
 
 Tips: Add it to your ~/.profile
 
+### Quick setup
+
+Add this line to your ```/etc/hosts``` file
+
+	172.21.13.103    ceph-gateway bucket.ceph-gateway
+
+
+It will give errors until the cluster is up and answered yes to the ssh question
+
+Run the following commands
+
+	make create-cluster    # Answer yes to ssh question
+	. ./env
+
+In a separate shell run
+
+	. ./env
+	make watch-cluster
+
+Continue with
+
+	make generate-services-from-templates
+	make start-services
+	make create-s3-test-user  # save the result
+	make install-dragondisk
+	make start-dragondisk	
+
+Add an account with the data from the saved result
+
+
+## Detailed setup
+
 A new cluster always needs a unique discovery-url. You can't reuse it so if you destroy the cluster and recreates it you must generate a new url by running the command again. It must be added to a config file that is provided to CoreOS. It can easily be created by running this command:
 
 ``` bash
