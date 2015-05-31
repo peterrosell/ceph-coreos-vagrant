@@ -13,13 +13,13 @@ RUN curl -sSL 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc'
 RUN apt-get install -yq ceph
 
 # install etcdctl
-RUN VERSION=0.4.6 ; URL=$(curl https://github.com/coreos/etcd/releases/download/v$VERSION/etcd-v$VERSION-linux-amd64.tar.gz | \
+RUN VERSION=2.0.10 ; URL=$(curl https://github.com/coreos/etcd/releases/download/v$VERSION/etcd-v$VERSION-linux-amd64.tar.gz | \
    sed 's/.*href="\(.*\)".*/\1/g' | sed 's/\&amp\;/\&/g') ; \
    curl "$URL" | tar -zOx etcd-v$VERSION-linux-amd64/etcdctl > /usr/local/bin/etcdctl \
    && chmod +x /usr/local/bin/etcdctl
 
 # install confd
-RUN VERSION=0.7.1 ; URL=$(curl https://github.com/kelseyhightower/confd/releases/download/v$VERSION/confd-$VERSION-linux-amd64 | \
+RUN VERSION=0.9.0 ; URL=$(curl https://github.com/kelseyhightower/confd/releases/download/v$VERSION/confd-$VERSION-linux-amd64 | \
    sed 's/.*href="\(.*\)".*/\1/g' | sed 's/\&amp\;/\&/g') ; \
    curl "$URL" > /usr/local/bin/confd \
    && chmod +x /usr/local/bin/confd
