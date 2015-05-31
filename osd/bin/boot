@@ -6,9 +6,12 @@ if [ $1 == 'no-bootstrap' ]; then
   exec bash
 fi
 
-ETCD_PORT=${ETCD_PORT:-4001}
+ETCD_PORT=${ETCD_PORT:-2379}
 ETCD="$HOST:$ETCD_PORT"
 ETCD_PATH=${ETCD_PATH:-/ceph}
+JOURNAL_DIR=${JOURNAL_DIR:-/dev/journal}
+
+set -e
 
 HOSTNAME=`hostname`
 OSD_ID=''
@@ -63,7 +66,8 @@ mkdir -p /var/lib/ceph/osd/ceph-${OSD_ID}
 # Check to see if our OSD has been initialized
 if [ ! -e /var/lib/ceph/osd/ceph-${OSD_ID}/keyring ]; then
   echo "store-daemon: OSD not yet initialized. Initializing..."
-  ceph-osd -i $OSD_ID --mkfs --mkjournal --osd-journal /var/lib/ceph/osd/ceph-${OSD_ID}/journal
+#  ceph-osd -i $OSD_ID --mkfs --mkjournal --osd-journal /var/lib/ceph/osd/ceph-${OSD_ID}/journal
+  ceph-osd -i $OSD_ID --mkfs --mkjournal --osd-journal $JOURNAL_DIR
   ceph auth get-or-create osd.${OSD_ID} osd 'allow *' mon 'allow profile osd' -o /var/lib/ceph/osd/ceph-${OSD_ID}/keyring
   ceph osd crush add ${OSD_ID} 1.0 root=default host=${HOSTNAME}
 fi
@@ -71,7 +75,7 @@ fi
 echo "store-daemon: starting daemon on ${HOSTNAME}..."
 
 if [ $1 == 'ceph-osd' ]; then
-  exec ceph-osd -d -i ${OSD_ID} -k /var/lib/ceph/osd/ceph-${OSD_ID}/keyring
+  exec ceph-osd -d -i ${OSD_ID} -k /var/lib/ceph/osd/ceph-${OSD_ID}/keyring --osd-journal $JOURNAL_DIR
 else
   exec $@
 fi

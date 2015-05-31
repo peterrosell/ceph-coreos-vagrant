@@ -1,155 +1,57 @@
 #cloud-config
 
 coreos:
-  etcd:
-      #generate a new token for each unique cluster from https://discovery.etcd.io/new
-      # discovery: https://discovery.etcd.io/TO_BE_REPLACED_WITH_VALID_ID
-      addr: $public_ipv4:4001
-      peer-addr: $public_ipv4:7001
+  etcd2:
+    # generated a new token for the unique cluster with https://discovery.etcd.io/new?size=3
+    # discovery: https://discovery.etcd.io/TO_BE_REPLACED_WITH_VALID_ID
+    initial-advertise-peer-urls: http://$public_ipv4:2380
+    advertise-client-urls: http://$public_ipv4:2379
+    # listen on both the official ports
+    listen-peer-urls: http://0.0.0.0:2380
+    listen-client-urls: http://0.0.0.0:2379,http://0.0.0.0:4001
+#  fleet:
+#    public-ip: $public_ipv4
+#    etcd-servers: http://127.0.0.1:2379
+#    metadata: storage=__ID__,type=storage
+
   units:
-    - name: settimezone.service
-      command: start
-      content: |
-        [Unit]
-        Description=Set the timezone
-        [Service]
-        ExecStart=/usr/bin/timedatectl set-timezone Europe/Stockholm
-        RemainAfterExit=yes
-        Type=oneshot
+#    - name: settimezone.service
+#      command: start
+#      content: |
+#        [Unit]
+#        Description=Set the timezone
+#        [Service]
+#        ExecStart=/usr/bin/timedatectl set-timezone Europe/Stockholm
+#        RemainAfterExit=yes
+#        Type=oneshot
 
-    - name: prepare-ephemeral.1.service
+    - name: prepare-disks.service
       command: start
       content: |
         [Unit]
-        Description=Formats the ephemeral drive
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStartPre=/usr/bin/mkdir -p /disks/physical
-        ExecStart=/tmp/ln_disk.sh __ID__a000000 /disks/physical/disk_a
-        SuccessExitStatus=0 203
-
-    - name: format-ephemeral.1.service
-      command: start
-      content: |
-        [Unit]
-        Description=Formats the ephemeral drive
-        Requires=prepare-ephemeral.1.service
-        After=prepare-ephemeral.1.service
+        Description=Partition and format storage disks
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStart=/usr/sbin/mkfs.btrfs --label disk_a /disks/physical/disk_a
-        ExecStartPost=/usr/bin/mkdir -p /disks/logical/disk_a
-        SuccessExitStatus=0 1
+        ExecStart=/tools/prepare_disks.sh perform
 
-    - name: disks-logical-disk_a.mount
+    - name: mount-storage-disks.service
       command: start
       content: |
         [Unit]
-        Description=Mount ephemeral.1 to /disks/logical/disk_a
-        Requires=format-ephemeral.1.service
-        After=format-ephemeral.1.service
-        Before=docker.service
-        ConditionPathIsDirectory=/disks/logical/disk_a
-        [Mount]
-        What=/disks/physical/disk_a
-        Where=/disks/logical/disk_a
-        Type=btrfs
-
-    - name: prepare-ephemeral.2.service
-      command: start
-      content: |
-        [Unit]
-        Description=Formats the ephemeral drive
+        Description=Mount storage disks
+        Requires=prepare-disks.service
+        After=prepare-disks.service
         [Service]
         Type=oneshot
         RemainAfterExit=yes
-        ExecStartPre=/usr/bin/mkdir -p /disks/physical
-        ExecStart=/tmp/ln_disk.sh __ID__b000000 /disks/physical/disk_b
-        SuccessExitStatus=0 203
+        ExecStart=/tools/mount_storage_disks.sh
 
-    - name: format-ephemeral.2.service
-      command: start
-      content: |
-        [Unit]
-        Description=Formats the ephemeral drive
-        Requires=prepare-ephemeral.2.service
-        After=prepare-ephemeral.2.service
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStart=/usr/sbin/mkfs.btrfs --label disk_b /disks/physical/disk_b
-        ExecStartPost=/usr/bin/mkdir -p /disks/logical/disk_b
-        SuccessExitStatus=0 1
-
-    - name: disks-logical-disk_b.mount
-      command: start
-      content: |
-        [Unit]
-        Description=Mount ephemeral.2 to /disks/logical/disk_b
-        Requires=format-ephemeral.2.service
-        After=format-ephemeral.2.service
-        Before=docker.service
-        ConditionPathIsDirectory=/disks/logical/disk_b
-        [Mount]
-        What=/disks/physical/disk_b
-        Where=/disks/logical/disk_b
-        Type=btrfs
-
-    - name: prepare-ephemeral.3.service
-      command: start
-      content: |
-        [Unit]
-        Description=Formats the ephemeral drive
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStartPre=/usr/bin/mkdir -p /disks/physical
-        ExecStart=/tmp/ln_disk.sh __ID__c000000 /disks/physical/disk_c
-        SuccessExitStatus=0 203
-
-    - name: format-ephemeral.3.service
-      command: start
-      content: |
-        [Unit]
-        Description=Formats the ephemeral drive
-        Requires=prepare-ephemeral.3.service
-        After=prepare-ephemeral.3.service
-        [Service]
-        Type=oneshot
-        RemainAfterExit=yes
-        ExecStart=/usr/sbin/mkfs.btrfs --label disk_c /disks/physical/disk_c
-        ExecStartPost=/usr/bin/mkdir -p /disks/logical/disk_c
-        SuccessExitStatus=0 1
-
-    - name: disks-logical-disk_c.mount
-      command: start
-      content: |
-        [Unit]
-        Description=Mount ephemeral.3 to /disks/logical/disk_c
-        Requires=format-ephemeral.3.service
-        After=format-ephemeral.3.service
-        Before=docker.service
-        ConditionPathIsDirectory=/disks/logical/disk_c
-        [Mount]
-        What=/disks/physical/disk_c
-        Where=/disks/logical/disk_c
-        Type=btrfs
-
-    - name: etcd.service
+    - name: etcd2.service
       command: start
 
     - name: fleet.service
       command: start
-      runtime: no
-      content: |
-        [Unit]
-        Description=fleet
-
-        [Service]
-        Environment=FLEET_PUBLIC_IP=$public_ipv4
-        ExecStart=/usr/bin/fleet
 
     - name: docker-tcp.socket
       command: start
@@ -165,27 +67,171 @@ coreos:
 
         [Install]
         WantedBy=sockets.target
-    - name: docker.service
-      command: restart
-      content: |
-        [Unit]
-        Description=Docker Application Container Engine 
-        Documentation=http://docs.docker.io
-        After=network.target
-        [Service]
-        ExecStartPre=/bin/mount --make-rprivate /
-        # Run docker but don't have docker automatically restart
-        # containers. This is a job for systemd and unit files.
-        # --ipv6 --fixed-cidr-v6="2001:16d8:ff00:85db:000__ID__::/80"
-        ExecStart=/usr/bin/docker --daemon --host=fd:// --insecure-registry="0.0.0.0/0"
-
-        [Install]
-        WantedBy=multi-user.target
-
 
 write_files:
+  - path: /etc/systemd/system/docker.service.d/50-insecure-registry.conf
+    content: |
+        [Service]
+        Environment='DOCKER_OPTS=--insecure-registry="__MY_DOCKER_REGISTRY__"'
+
   - path: /etc/fleet/fleet.conf
     permissions: 0644
     owner: root
     content: |
-      metadata="type=storage,storage=__ID__,disk_a=true,disk_b=true,disk_c=true"
+      metadata="type=storage,storage=__ID__"
+
+  - path: /tools/prepare_disks.sh
+    permissions: 0755
+    owner: root
+    content: |
+      #!/bin/bash
+
+      #DEBUG=true
+      set -e
+
+      if [ "$1" == "perform" ]; then
+        PERFORM=true
+        echo "Prepare disks will perform a real disk format!"
+      else
+        PERFORM=""
+        echo "Prepare disks will do a DRY RUN."
+      fi
+
+      debug() {
+        if [ "$DEBUG" != "" ]; then
+          echo $*
+        fi
+      }
+
+      run_and_log() {
+        echo $*
+        if [ "$PERFORM" != "" ]; then
+          $*
+        fi
+      }
+
+      containsDisk () {
+        local e
+        RESULT="false"
+        for e in "${@:2}"; do [[ "$e" == "$1" ]] && RESULT="true"; done
+        echo "$RESULT"
+      }
+
+      getDiskId() {
+        if [ "$PERFORM" != "" ]; then
+          echo $(fdisk -l $1 | cut -f3 -d'/' | cut -f1 -d',' | grep 'Disk identifier:' | sed 's/.*: \(.*\)/\1/')
+        else
+          echo "DUMMY-ID"
+        fi
+
+      }
+
+      getPartUUID() {
+        if [ "$PERFORM" != "" ]; then
+          echo $(blkid $1 | gawk 'match($0,/PARTUUID=\"(.*?)\"/, ary) {print ary[1]}')
+        else
+          echo "DUMMY-UUID"
+        fi
+      }
+
+      getAvailableDiskSpaceInSectors() {
+        if [ "$PERFORM" != "" ]; then
+          echo $(parted -s -m $1 unit s print free | tail -n 1 | grep 'free;' | sort -t : -k 4n -k 2n | awk -F':' '{print $2 " " $3}')
+        else
+          echo "start-sector end-sector"
+        fi
+      }
+
+      ALL_DISKS=$(ls /dev/sd?)
+      debug "All disks:"$ALL_DISKS
+
+      if [ -e /etc/prepared_disks.conf ]; then
+        set +e
+        IFS=$'\n' read -d '' -r -a OLD_DISKS < /etc/prepared_disks.conf
+        set -e
+      else
+        OLD_DISKS=()
+      fi
+      debug "Old disks: ${OLD_DISKS[@]}"
+
+      CLEAN_DISKS=""
+      for DISK in $ALL_DISKS 
+      do
+        debug "Disk: $DISK"
+        DISK_ID=$(getDiskId $DISK)
+        debug "Disk id: $DISK_ID"
+        if [ "$(containsDisk "$DISK_ID" "${OLD_DISKS[@]}")" == "true" ]; then
+          echo "Already prepared disk $DISK. Skipping it."
+        else
+          set +e
+          PARTITIONS=$(ls ${DISK}? 2>/dev/null)
+          set -e
+          debug "$DISK has parts: $PARTITIONS"
+          if [ "$PARTITIONS" == "" ]; then
+            CLEAN_DISKS="$CLEAN_DISKS $DISK"
+          else
+            echo "$DISK already has partitions. Skipping it."
+          fi
+        fi  
+      done
+
+      debug "Clean disks:"$CLEAN_DISKS
+
+      for DISK in $CLEAN_DISKS
+      do
+        DISK_LETTER=${DISK: -1}
+        # Init disk with GTP
+        run_and_log parted -s $DISK mklabel gpt
+        sleep 1
+
+        # Create journal disk area
+        run_and_log parted -s -a optimal $DISK unit GB mkpart primary 0 5
+        sleep 1
+        run_and_log mkdir -p /disk_journal
+
+        JOURNAL_DISK_UUID=$(getPartUUID ${DISK}1)
+        run_and_log ln -s /dev/disk/by-partuuid/$JOURNAL_DISK_UUID /disk_journal/disk_$DISK_LETTER
+
+        # Allocate other disk space to one storage partition 
+
+        AVAILABLE_DISK_SPACE=$(getAvailableDiskSpaceInSectors $DISK)
+        sleep 1
+        run_and_log parted -s -a optimal $DISK unit s mkpart primary $AVAILABLE_DISK_SPACE
+        sleep 5
+        run_and_log mkfs.xfs -f -L stor-disk_$DISK_LETTER ${DISK}2
+        sleep 1
+        DISK_ID=$(getDiskId $DISK)
+        echo "Marking disk with id $DISK_ID as prepared."
+        if [ "$PERFORM" != "" ]; then
+          echo "$DISK_ID" >> /etc/prepared_disks.conf
+        fi
+      done
+
+  - path: /tools/mount_storage_disks.sh
+    permissions: 0755
+    owner: root
+    content: |
+      #!/bin/bash
+
+      set -e
+
+      appendToMetaData() {
+        DISK_NAME=$1
+        echo "Adding $DISK_NAME to metadata."
+        sed -i "s/\"$/,$DISK_NAME=true\"/" /etc/fleet/fleet.conf
+      }
+
+      STORAGE_DISKS=$(ls /dev/disk/by-label/stor-*)
+
+      for DISK in $STORAGE_DISKS
+      do
+        DISK_DEST="/disks/${DISK: -6}"
+        if mount|grep $DISK_DEST; then
+          echo "$DISK_DEST is already mounted. Skipping it."
+        else
+          mkdir -p $DISK_DEST
+          echo "Mounting $DISK to $DISK_DEST"
+          mount $DISK $DISK_DEST
+          appendToMetaData ${DISK: -6}
+        fi
+      done
