@@ -85,7 +85,7 @@ Vagrant.configure("2") do |config|
 #      end
 
       ip = "#{NETWORK_BASE}.#{i+100}"
-      config.vm.network :private_network, ip: ip
+      config.vm.network "private_network", ip: ip
       #, virtualbox__intnet: true
 
       config.vm.provider :virtualbox do |vb|
