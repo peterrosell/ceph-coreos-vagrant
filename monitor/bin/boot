@@ -6,9 +6,15 @@ if [ $1 == 'no-bootstrap' ]; then
   exec bash
 fi
 
-#set -e
+set -e
 
-ETCD_PORT=${ETCD_PORT:-4001}
+echo $DEBUG
+if [[ $DEBUG == *"ceph-monitor"* ]]; then
+  echo "Go debug"
+  set -x
+fi
+
+ETCD_PORT=${ETCD_PORT:-2379}
 ETCD="$HOST:$ETCD_PORT"
 ETCD_PATH=${ETCD_PATH:-/ceph}
 NUM_STORES=${NUM_STORES:-3}
@@ -59,6 +65,8 @@ if ! etcdctl --no-sync -C $ETCD get ${ETCD_PATH}/monSetupComplete >/dev/null 2>&
       sleep 5
     done
   fi
+else
+  echo "store-monitor: Ceph monitor already bootstrapped"
 fi
 
 until confd -onetime -node $ETCD -config-file /app/confd.toml >/dev/null 2>&1; do

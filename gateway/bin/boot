@@ -13,7 +13,7 @@ set -eo pipefail
 [[ $DEBUG ]] && set -x
 
 # configure etcd
-export ETCD_PORT=${ETCD_PORT:-4001}
+export ETCD_PORT=${ETCD_PORT:-2379}
 export ETCD="$HOST:$ETCD_PORT"
 export ETCD_PATH=${ETCD_PATH:-/ceph/gateway}
 export HOST_ETCD_PATH=${HOST_ETCD_PATH:-/ceph/gateway/hosts/$HOST}
