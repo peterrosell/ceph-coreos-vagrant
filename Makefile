@@ -16,12 +16,13 @@ SERVICE_TEMPLATES := $(shell cd services/templates && find *)
 SERVERS :=1 2 3
 
 discovery-url:
-	@curl -s -w '\n' https://discovery.etcd.io/new > discovery.url
+	@curl -s -w '\n' https://discovery.etcd.io/new?size=1 > discovery.url
 	@$(foreach I, $(SERVERS), \
 		cat user-data.template | \
 		sed -e "s,# discovery: https://discovery.etcd.io/,discovery: https://discovery.etcd.io/," | \
 		sed -e "s,discovery: https://discovery.etcd.io/.*,discovery: $$(cat discovery.url)," | \
-		sed -e "s/__ID__/$(I)/" \
+		sed -e "s/__ID__/$(I)/" | \
+		sed -e "s/__MY_DOCKER_REGISTRY__/$(MY_DOCKER_REGISTRY)/" \
 		> user-data-$(I) ; \
 	)
 	@echo "Created user-data-*"
