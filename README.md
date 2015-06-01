@@ -69,6 +69,54 @@ Before you can start the services you need to register ssh key and set two envir
 make dev-environment
 ```
 
+##Known issues
+
+When running on virtualbox there sometimes, quite often, occur problem with partitioning and formating a disk. Maybe this happens due to the disks are virtual on the same hardware disk. Haven't seen this on a physical disk.
+To verify the status use ```df``` to check that you have three disks mounted.
+Use command ```journalctl -u prepare-disks``` to search for error. Anyway, the errors looks like this
+
+    Error: Error informing the kernel about modifications to partition /dev/sdd1 -- Device or re
+    Error: Failed to add partition 1 (Device or resource busy)
+
+The workaround is to run fdisk and delete all partitions. Sometimes the softlink ```disk_journal/disk_<id>``` must be deleted too. When the disk state is cleared you can run the prepare_disks.sh script manually, ```sudo /tools/prepare_disks.sh perform```. It is also possible to restart the instance and hope the partitioning works better. There might be some problem with that due to the disks in virtualbox seems to change location between boots.
+
+    core@core-01 ~ $ sudo fdisk /dev/sdd
+
+    Welcome to fdisk (util-linux 2.26.1).
+    Changes will remain in memory only, until you decide to write them.
+    Be careful before using the write command.
+
+
+    Command (m for help): p
+    Disk /dev/sdd: 11.9 GiB, 12721324032 bytes, 24846336 sectors
+    Units: sectors of 1 * 512 = 512 bytes
+    Sector size (logical/physical): 512 bytes / 512 bytes
+    I/O size (minimum/optimal): 512 bytes / 512 bytes
+    Disklabel type: gpt
+    Disk identifier: 6E362C03-0425-4A36-A437-83A4F7BC30AD
+
+    Device       Start      End  Sectors  Size Type
+    /dev/sdd1     2048  9764863  9762816  4.7G Microsoft basic data
+    /dev/sdd2  9764864 24846302 15081439  7.2G Microsoft basic data
+
+    Command (m for help): d
+    Partition number (1,2, default 2):  
+
+    Partition 2 has been deleted.
+
+    Command (m for help): d
+    Selected partition 1
+    Partition 1 has been deleted.
+
+    Command (m for help): 
+
+
+    Command (m for help): w
+
+    The partition table has been altered.
+    Calling ioctl() to re-read partition table.
+    Syncing disks.
+
 ##Trobleshoting
 If fleetctl complains about bad ssh keys they can be removed with this command.
 ``` bash
