@@ -86,7 +86,7 @@ write_files:
     content: |
       #!/bin/bash
 
-      #DEBUG=true
+      DEBUG=true
       set -e
 
       if [ "$1" == "perform" ]; then
@@ -113,22 +113,19 @@ write_files:
       containsDisk () {
         local e
         RESULT="false"
-        for e in "${@:2}"; do [[ "$e" == "$1" ]] && RESULT="true"; done
+        for e in "${@:2}"; do [[ "${e,,}" == "${1,,}" ]] && RESULT="true"; done
         echo "$RESULT"
       }
 
-      getDiskId() {
-        if [ "$PERFORM" != "" ]; then
-          echo $(fdisk -l $1 | cut -f3 -d'/' | cut -f1 -d',' | grep 'Disk identifier:' | sed 's/.*: \(.*\)/\1/')
-        else
-          echo "DUMMY-ID"
-        fi
-
+      getDiskUUID() {
+        echo $(fdisk -l $1 | cut -f3 -d'/' | cut -f1 -d',' | grep 'Disk identifier:' | sed 's/.*: \(.*\)/\1/')
       }
 
       getPartUUID() {
+        PARTITION=$1
         if [ "$PERFORM" != "" ]; then
-          echo $(blkid $1 | gawk 'match($0,/PARTUUID=\"(.*?)\"/, ary) {print ary[1]}')
+        echo $(lsblk `readlink -f $PARTITION` -o PARTUUID --noheadings)
+ #          echo $(blkid $1 | gawk 'match($0,/PARTUUID=\"(.*?)\"/, ary) {print ary[1]}')
         else
           echo "DUMMY-UUID"
         fi
@@ -142,29 +139,35 @@ write_files:
         fi
       }
 
-      ALL_DISKS=$(ls /dev/sd?)
+      getAllDisks() {
+        echo $(ls /dev/disk/by-id/ata-* | grep -v "\-part")
+      }
+
+      ALL_DISKS=$(getAllDisks)
       debug "All disks:"$ALL_DISKS
 
       if [ -e /etc/prepared_disks.conf ]; then
         set +e
-        IFS=$'\n' read -d '' -r -a OLD_DISKS < /etc/prepared_disks.conf
+        IFS=$'\n' read -d '' -r -a PREPARED_DISKS < /etc/prepared_disks.conf
         set -e
       else
-        OLD_DISKS=()
+        PREPARED_DISKS=()
       fi
-      debug "Old disks: ${OLD_DISKS[@]}"
+      debug "Prepared disks: ${PREPARED_DISKS[@]}"
+
 
       CLEAN_DISKS=""
-      for DISK in $ALL_DISKS 
+      for DISK in $ALL_DISKS
       do
-        debug "Disk: $DISK"
-        DISK_ID=$(getDiskId $DISK)
-        debug "Disk id: $DISK_ID"
-        if [ "$(containsDisk "$DISK_ID" "${OLD_DISKS[@]}")" == "true" ]; then
+        DISK_LETTERED=$(readlink -f $DISK)
+        debug "Disk: $DISK mapped to $DISK_LETTERED"
+        DISK_UUID=$(getDiskUUID $DISK_LETTERED)
+        debug "Disk uuid: $DISK_UUID"
+        if [ "$(containsDisk "$DISK_UUID" "${PREPARED_DISKS[@]}")" == "true" ]; then
           echo "Already prepared disk $DISK. Skipping it."
         else
           set +e
-          PARTITIONS=$(ls ${DISK}? 2>/dev/null)
+          PARTITIONS=$(ls ${DISK_LETTERED}? 2>/dev/null)
           set -e
           debug "$DISK has parts: $PARTITIONS"
           if [ "$PARTITIONS" == "" ]; then
@@ -172,38 +175,41 @@ write_files:
           else
             echo "$DISK already has partitions. Skipping it."
           fi
-        fi  
+        fi
       done
 
       debug "Clean disks:"$CLEAN_DISKS
 
+      DISK_COUNTER=${#PREPARED_DISKS[@]}
       for DISK in $CLEAN_DISKS
       do
-        DISK_LETTER=${DISK: -1}
+        DISK_COUNTER=$((DISK_COUNTER+1))
+        DISK_ID="disk_$DISK_COUNTER"
+        DISK_LETTERED=$(readlink -f $DISK)
         # Init disk with GTP
-        run_and_log parted -s $DISK mklabel gpt
+        run_and_log parted -s $DISK_LETTERED mklabel gpt
         sleep 1
 
         # Create journal disk area
-        run_and_log parted -s -a optimal $DISK unit GB mkpart primary 0 5
+        run_and_log parted -s -a optimal $DISK_LETTERED unit GB mkpart primary 0 5
         sleep 1
         run_and_log mkdir -p /disk_journal
 
-        JOURNAL_DISK_UUID=$(getPartUUID ${DISK}1)
-        run_and_log ln -s /dev/disk/by-partuuid/$JOURNAL_DISK_UUID /disk_journal/disk_$DISK_LETTER
+        JOURNAL_DISK_UUID=$(getPartUUID ${DISK_LETTERED}1)
+        run_and_log ln -s /dev/disk/by-partuuid/$JOURNAL_DISK_UUID /disk_journal/$DISK_ID
 
-        # Allocate other disk space to one storage partition 
+        # Allocate other disk space to one storage partition
 
         AVAILABLE_DISK_SPACE=$(getAvailableDiskSpaceInSectors $DISK)
         sleep 1
-        run_and_log parted -s -a optimal $DISK unit s mkpart primary $AVAILABLE_DISK_SPACE
+        run_and_log parted -s -a optimal $DISK_LETTERED unit s mkpart primary $AVAILABLE_DISK_SPACE
         sleep 5
-        run_and_log mkfs.xfs -f -L stor-disk_$DISK_LETTER ${DISK}2
+        run_and_log mkfs.xfs -f -L stor-$DISK_ID ${DISK_LETTERED}2
         sleep 1
-        DISK_ID=$(getDiskId $DISK)
-        echo "Marking disk with id $DISK_ID as prepared."
+        DISK_UUID=$(getDiskUUID $DISK_LETTERED)
+        echo "Marking disk with id $DISK_UUID as prepared."
         if [ "$PERFORM" != "" ]; then
-          echo "$DISK_ID" >> /etc/prepared_disks.conf
+          echo "$DISK_UUID" >> /etc/prepared_disks.conf
         fi
       done
 
@@ -221,17 +227,24 @@ write_files:
         sed -i "s/\"$/,$DISK_NAME=true\"/" /etc/fleet/fleet.conf
       }
 
+      storageLabelToDiskId() {
+        STORAGE_LABEL=$1
+        A=`echo "$(basename ${DISK})"`
+        echo ${A:5}
+      }
+
       STORAGE_DISKS=$(ls /dev/disk/by-label/stor-*)
 
       for DISK in $STORAGE_DISKS
       do
-        DISK_DEST="/disks/${DISK: -6}"
+        DISK_ID="$(storageLabelToDiskId $DISK)"
+        DISK_DEST="/disks/$DISK_ID"
         if mount|grep $DISK_DEST; then
           echo "$DISK_DEST is already mounted. Skipping it."
         else
           mkdir -p $DISK_DEST
           echo "Mounting $DISK to $DISK_DEST"
           mount $DISK $DISK_DEST
-          appendToMetaData ${DISK: -6}
+          appendToMetaData ${DISK_ID}
         fi
       done
