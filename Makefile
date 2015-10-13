@@ -118,22 +118,22 @@ clean-old-run:
 
 start-services:
 	@(cd gen/services && fleetctl start ceph-monitor@1.service)
-	@(cd gen/services && fleetctl start ceph-osd_disk_a@1.service) 
-#	@(cd gen/services && fleetctl start ceph-osd_disk_b@1.service) 
-#	@(cd gen/services && fleetctl start ceph-osd_disk_c@1.service) 
-	@(cd gen/services && fleetctl start ceph-osd_disk_a@2.service) 
-#	@(cd gen/services && fleetctl start ceph-osd_disk_b@2.service) 
-#	@(cd gen/services && fleetctl start ceph-osd_disk_c@2.service) 
-	@(cd gen/services && fleetctl start ceph-osd_disk_a@3.service) 
-#	@(cd gen/services && fleetctl start ceph-osd_disk_b@3.service) 
-#	@(cd gen/services && fleetctl start ceph-osd_disk_c@3.service) 
+	@(cd gen/services && fleetctl start ceph-osd_disk_1@1.service)
+#	@(cd gen/services && fleetctl start ceph-osd_disk_2@1.service)
+#	@(cd gen/services && fleetctl start ceph-osd_disk_3@1.service)
+	@(cd gen/services && fleetctl start ceph-osd_disk_1@2.service)
+#	@(cd gen/services && fleetctl start ceph-osd_disk_2@2.service)
+#	@(cd gen/services && fleetctl start ceph-osd_disk_3@2.service)
+	@(cd gen/services && fleetctl start ceph-osd_disk_1@3.service)
+#	@(cd gen/services && fleetctl start ceph-osd_disk_2@3.service)
+#	@(cd gen/services && fleetctl start ceph-osd_disk_3@3.service)
 	@(cd gen/services && fleetctl start ceph-metadata@2.service) 
 	@(cd gen/services && fleetctl start ceph-gateway@3.service) 
 
 stop-disk-services:
-	@(cd gen/services && fleetctl destroy ceph-osd_disk_a@1.service) 
-	@(cd gen/services && fleetctl destroy ceph-osd_disk_a@2.service) 
-	@(cd gen/services && fleetctl destroy ceph-osd_disk_a@3.service) 
+	@(cd gen/services && fleetctl destroy ceph-osd_disk_1@1.service)
+	@(cd gen/services && fleetctl destroy ceph-osd_disk_1@2.service)
+	@(cd gen/services && fleetctl destroy ceph-osd_disk_1@3.service)
 
 
 create-s3-test-user:
