@@ -6,8 +6,10 @@ ENV DEBIAN_FRONTEND noninteractive
 # install common packages
 RUN apt-get update && apt-get install -yq curl net-tools sudo
 
-RUN curl -sSL 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | apt-key add - \
-   && echo "deb http://ceph.com/debian-giant trusty main" > /etc/apt/sources.list.d/ceph.list \
+RUN apt-get install -yq apt-transport-https
+RUN curl -sSL 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | \
+   apt-key add - \
+   && echo "deb http://download.ceph.com/debian-giant trusty main" > /etc/apt/sources.list.d/ceph.list \
    && apt-get update 
 
 RUN apt-get install -yq ceph

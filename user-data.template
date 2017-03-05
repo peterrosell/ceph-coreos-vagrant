@@ -1,6 +1,8 @@
 #cloud-config
 
 coreos:
+  update:
+    reboot-strategy: etcd-lock
   etcd2:
     # generated a new token for the unique cluster with https://discovery.etcd.io/new?size=3
     # discovery: https://discovery.etcd.io/TO_BE_REPLACED_WITH_VALID_ID
@@ -125,7 +127,6 @@ write_files:
         PARTITION=$1
         if [ "$PERFORM" != "" ]; then
         echo $(lsblk `readlink -f $PARTITION` -o PARTUUID --noheadings)
- #          echo $(blkid $1 | gawk 'match($0,/PARTUUID=\"(.*?)\"/, ary) {print ary[1]}')
         else
           echo "DUMMY-UUID"
         fi

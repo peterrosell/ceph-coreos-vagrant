@@ -1,6 +1,7 @@
 include includes.mk
 
-FLEET_VERSION=0.9.1
+FLEET_VERSION=0.11.8
+BUILD_TAG=0.87.2
 
 TEMPLATE_IMAGES=monitor osd gateway metadata
 BUILT_IMAGES=base $(TEMPLATE_IMAGES)
@@ -39,9 +40,9 @@ build: check-docker
 
 push: check-docker check-registry 
 	$(foreach I, $(BUILT_IMAGES), \
-		docker tag -f ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):$(BUILD_TAG) ; \
+		docker tag ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):$(BUILD_TAG) ; \
 		docker push $(IMAGE_PREFIX)ceph-$(I):$(BUILD_TAG) ; \
-		docker tag -f ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):latest ; \
+		docker tag ceph-$(I):$(BUILD_TAG) $(IMAGE_PREFIX)ceph-$(I):latest ; \
 		docker push $(IMAGE_PREFIX)ceph-$(I):latest ; \
 	)
 
