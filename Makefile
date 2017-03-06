@@ -1,9 +1,10 @@
 include includes.mk
 
 FLEET_VERSION=0.11.8
-BUILD_TAG=0.87.2
+BUILD_TAG=0.94.10
 
-TEMPLATE_IMAGES=monitor osd gateway metadata
+# gateway 
+TEMPLATE_IMAGES=monitor osd metadata
 BUILT_IMAGES=base $(TEMPLATE_IMAGES)
 
 DAEMON_IMAGE = $(IMAGE_PREFIX)ceph-daemon:$(BUILD_TAG)
@@ -119,6 +120,7 @@ clean-old-run:
 
 start-services:
 	@(cd gen/services && fleetctl start ceph-monitor@1.service)
+	@(cd gen/services && fleetctl start ceph-monitor@2.service)
 	@(cd gen/services && fleetctl start ceph-osd_disk_1@1.service)
 #	@(cd gen/services && fleetctl start ceph-osd_disk_2@1.service)
 #	@(cd gen/services && fleetctl start ceph-osd_disk_3@1.service)
@@ -129,6 +131,7 @@ start-services:
 #	@(cd gen/services && fleetctl start ceph-osd_disk_2@3.service)
 #	@(cd gen/services && fleetctl start ceph-osd_disk_3@3.service)
 	@(cd gen/services && fleetctl start ceph-metadata@2.service) 
+	@(cd gen/services && fleetctl start ceph-metadata@3.service) 
 	@(cd gen/services && fleetctl start ceph-gateway@3.service) 
 
 stop-disk-services:

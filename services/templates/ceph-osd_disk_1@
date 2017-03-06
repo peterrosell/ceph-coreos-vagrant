@@ -7,11 +7,12 @@ RestartSec=10s
 TimeoutStartSec=0
 EnvironmentFile=/etc/environment
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
+Environment="CEPH_VERSION=0.94.10"
 Environment="OSD_DISK=disk_1"
 ExecStartPre=/usr/bin/docker login -u k8s -p K8Sk8sk8s registry.emendatus.com
-ExecStartPre=-/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:0.87.2
+ExecStartPre=-/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:${CEPH_VERSION}
 ExecStartPre=/bin/sh -c "docker inspect ceph-osd-${OSD_DISK} >/dev/null 2>&1 && docker rm -f ceph-osd-${OSD_DISK} || true"
-ExecStart=/bin/sh -c "JOURNAL_DISK=`/usr/bin/readlink -f /disk_journal/${OSD_DISK}` && /usr/bin/docker run --rm --name ceph-osd-${OSD_DISK} --net=host --pid=host --env HOST=${COREOS_PRIVATE_IPV4} --env OSD_DISK=${OSD_DISK} -v /disks/${OSD_DISK}:/var/lib/ceph/osd --device=$JOURNAL_DISK:/dev/journal:rwm ${DOCKER_REGISTRY}ceph-osd:0.87.2"
+ExecStart=/bin/sh -c "JOURNAL_DISK=`/usr/bin/readlink -f /disk_journal/${OSD_DISK}` && /usr/bin/docker run --rm --name ceph-osd-${OSD_DISK} --net=host --pid=host --env HOST=${COREOS_PRIVATE_IPV4} --env OSD_DISK=${OSD_DISK} -v /disks/${OSD_DISK}:/var/lib/ceph/osd --device=$JOURNAL_DISK:/dev/journal:rwm ${DOCKER_REGISTRY}ceph-osd:${CEPH_VERSION}"
 ExecStop=/usr/bin/docker stop ceph-osd-${OSD_DISK}
 
 [X-Fleet]

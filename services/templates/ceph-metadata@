@@ -5,11 +5,12 @@ Description=ceph-metadata
 EnvironmentFile=/etc/environment
 TimeoutStartSec=20m
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
+Environment="CEPH_VERSION=0.94.10"
 ExecStartPre=/usr/bin/docker login -u k8s -p K8Sk8sk8s registry.emendatus.com
 ExecStartPre=-/usr/bin/docker kill ceph-metadata
-ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-metadata:0.87.2
+ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-metadata:${CEPH_VERSION}
 ExecStartPre=/bin/sh -c "docker inspect ceph-metadata >/dev/null 2>&1 && docker rm -f ceph-metadata || true"
-ExecStart=/usr/bin/docker run --name ceph-metadata --rm -e "HOST=${COREOS_PRIVATE_IPV4}" --net host ${DOCKER_REGISTRY}ceph-metadata:0.87.2
+ExecStart=/usr/bin/docker run --name ceph-metadata --rm -e "HOST=${COREOS_PRIVATE_IPV4}" --net host ${DOCKER_REGISTRY}ceph-metadata:${CEPH_VERSION}
 ExecStopPost=-/usr/bin/docker stop ceph-metadata
 Restart=on-failure
 RestartSec=5
