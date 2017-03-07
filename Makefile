@@ -1,7 +1,7 @@
 include includes.mk
 
 FLEET_VERSION=0.11.8
-BUILD_TAG=0.94.10
+BUILD_TAG=10.2.5
 
 # gateway 
 TEMPLATE_IMAGES=monitor osd metadata
@@ -82,8 +82,9 @@ cloud-init:
 
 generate-services-from-templates: check-awk
 	@mkdir -p gen/services
+	@
 	@$(foreach I, $(SERVICE_TEMPLATES), \
-		awk '{while(match($$0,"[$$][$$]{[^}]*}")) {var=substr($$0,RSTART+3,RLENGTH -4);gsub("[$$][$$]{"var"}",ENVIRON[var])}}1' < services/templates/$I > gen/services/$I.service && \
+		CEPH_VERSION=${BUILD_TAG} awk '{while(match($$0,"[$$][$$]{[^}]*}")) {var=substr($$0,RSTART+3,RLENGTH -4);gsub("[$$][$$]{"var"}",ENVIRON[var])}}1' < services/templates/$I > gen/services/$I.service && \
 		echo 'Created service file: $I.service' ; \
 	)
 

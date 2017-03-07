@@ -5,7 +5,7 @@ Description=ceph-metadata
 EnvironmentFile=/etc/environment
 TimeoutStartSec=20m
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
-Environment="CEPH_VERSION=0.94.10"
+Environment="CEPH_VERSION=$${CEPH_VERSION}"
 ExecStartPre=/usr/bin/docker login -u k8s -p K8Sk8sk8s registry.emendatus.com
 ExecStartPre=-/usr/bin/docker kill ceph-metadata
 ExecStartPre=/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-metadata:${CEPH_VERSION}

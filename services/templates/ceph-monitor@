@@ -7,7 +7,7 @@ RestartSec=10s
 TimeoutStartSec=0
 EnvironmentFile=/etc/environment
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
-Environment="CEPH_VERSION=0.94.10"
+Environment="CEPH_VERSION=$${CEPH_VERSION}"
 ExecStartPre=/usr/bin/docker login -u k8s -p K8Sk8sk8s registry.emendatus.com
 ExecStartPre=/bin/sh -c "docker inspect ceph-monitor-data-%i >/dev/null 2>&1 || docker run --name ceph-monitor-data-%i -v /etc/ceph -v /var/lib/ceph/mon ubuntu-debootstrap:14.04 /bin/true"
 ExecStartPre=-/usr/bin/docker kill ceph-monitor-%i

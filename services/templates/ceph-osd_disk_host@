@@ -7,7 +7,7 @@ RestartSec=10s
 TimeoutStartSec=0
 EnvironmentFile=/etc/environment
 Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
-Environment="CEPH_VERSION=0.94.10"
+Environment="CEPH_VERSION=$${CEPH_VERSION}"
 Environment="OSD_DISK=host"
 ExecStartPre=/usr/bin/docker login -u k8s -p K8Sk8sk8s registry.emendatus.com
 ExecStartPre=-/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:${CEPH_VERSION}
