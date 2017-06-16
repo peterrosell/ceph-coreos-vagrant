@@ -82,7 +82,7 @@ if [ ! -e /var/lib/ceph/mon/ceph-${HOSTNAME}/keyring ]; then
 
   # Import the client.admin keyring and the monitor keyring into a new, temporary one
   ceph-authtool /tmp/ceph.mon.keyring --create-keyring --import-keyring /etc/ceph/ceph.client.admin.keyring
-  ceph-authtool /tmp/ceph.mon.keyring --import-keyring /etc/ceph/ceph.mon.keyring
+  ceph-authtool /tmp/ceph.mon.keyring --import-keyring /etc/ceph/ceph.keyring
 
   # Make the monitor directory
   mkdir -p /var/lib/ceph/mon/ceph-${HOSTNAME}
