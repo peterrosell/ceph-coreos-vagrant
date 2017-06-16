@@ -1,7 +1,7 @@
 include includes.mk
 
 FLEET_VERSION=0.11.8
-BUILD_TAG=10.2.5
+BUILD_TAG=0.94.10
 
 # gateway 
 TEMPLATE_IMAGES=monitor osd metadata
