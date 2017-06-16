@@ -1,5 +1,5 @@
-#FROM ubuntu:16.04
-FROM blitznote/debootstrap-amd64:16.04
+FROM ubuntu:16.04
+#FROM blitznote/debootstrap-amd64:16.04
 
 #ENV DEBIAN_FRONTEND noninteractive
 
@@ -8,18 +8,18 @@ FROM blitznote/debootstrap-amd64:16.04
 RUN apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq curl net-tools sudo \
     && curl -sSL 'https://ceph.com/git/?p=ceph.git;a=blob_plain;f=keys/release.asc' | apt-key add - \
-    && echo "deb http://download.ceph.com/debian-jewel xenial main" > /etc/apt/sources.list.d/ceph.list \
+    && echo "deb http://download.ceph.com/debian-hammer xenial main" > /etc/apt/sources.list.d/ceph.list \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
-        ceph=10.2.5-1xenial \
-        ceph-common=10.2.5-1xenial \
-        ceph-fuse=10.2.5-1xenial \
-        ceph-mds=10.2.5-1xenial \
-        librbd1=10.2.5-1xenial \
-        python-rados=10.2.5-1xenial \
-        python-cephfs=10.2.5-1xenial \
-        python-rbd=10.2.5-1xenial \
-        librados2=10.2.5-1xenial \
+        ceph=0.94.10-1xenial \
+        ceph-common=0.94.10-1xenial \
+        ceph-fuse=0.94.10-1xenial \
+        ceph-mds=0.94.10-1xenial \
+        librbd1=0.94.10-1xenial \
+        python-rados=0.94.10-1xenial \
+        python-cephfs=0.94.10-1xenial \
+        python-rbd=0.94.10-1xenial \
+        librados2=0.94.10-1xenial \
      && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # install etcdctl
