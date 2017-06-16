@@ -11,15 +11,15 @@ RUN apt-get update \
     && echo "deb http://download.ceph.com/debian-jewel xenial main" > /etc/apt/sources.list.d/ceph.list \
     && apt-get update \
     && DEBIAN_FRONTEND=noninteractive apt-get install -yq \
-        ceph=10.2.5-1xenial \
-        ceph-common=10.2.5-1xenial \
-        ceph-fuse=10.2.5-1xenial \
-        ceph-mds=10.2.5-1xenial \
-        librbd1=10.2.5-1xenial \
-        python-rados=10.2.5-1xenial \
-        python-cephfs=10.2.5-1xenial \
-        python-rbd=10.2.5-1xenial \
-        librados2=10.2.5-1xenial \
+        ceph=10.2.7-1xenial \
+        ceph-common=10.2.7-1xenial \
+        ceph-fuse=10.2.7-1xenial \
+        ceph-mds=10.2.7-1xenial \
+        librbd1=10.2.7-1xenial \
+        python-rados=10.2.7-1xenial \
+        python-cephfs=10.2.7-1xenial \
+        python-rbd=10.2.7-1xenial \
+        librados2=10.2.7-1xenial \
      && apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # install etcdctl
