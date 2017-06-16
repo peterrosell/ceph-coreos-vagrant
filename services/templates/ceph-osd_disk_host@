@@ -10,7 +10,6 @@ Environment="DOCKER_REGISTRY=$${DOCKER_REGISTRY}"
 Environment="CEPH_VERSION=$${CEPH_VERSION}"
 Environment="OSD_DISK=host"
 ExecStartPre=/usr/bin/docker login -u k8s -p K8Sk8sk8s registry.emendatus.com
-ExecStartPre=-/usr/bin/docker pull ${DOCKER_REGISTRY}ceph-osd:${CEPH_VERSION}
 ExecStartPre=/bin/sh -c "docker inspect ceph-osd-${OSD_DISK} >/dev/null 2>&1 && docker rm -f ceph-osd-${OSD_DISK} || true"
 ExecStart=/usr/bin/docker run --rm --name ceph-osd-${OSD_DISK} --net=host --pid=host --env HOST=${COREOS_PRIVATE_IPV4} --env OSD_DISK=${OSD_DISK} -v /disks/${OSD_DISK}:/var/lib/ceph/osd -v /disk_journal/${OSD_DISK}:/dev/journal ${DOCKER_REGISTRY}ceph-osd:${CEPH_VERSION}
 ExecStop=/usr/bin/docker stop ceph-osd-${OSD_DISK}
